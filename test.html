@@ -456,14 +456,10 @@
             padding: 12px 14px;
             box-shadow: var(--glow);
             z-index: 20;
-            width: 260px;
-            transition: all var(--speed) ease;
-            overflow: hidden;
-        }
-        
-        .music-player.collapsed {
             width: 52px;
             height: 52px;
+            transition: all var(--speed) ease;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -473,6 +469,9 @@
         .music-player.expanded {
             width: 260px;
             height: auto;
+            align-items: flex-start;
+            justify-content: flex-start;
+            flex-direction: column;
         }
         
         .music-header {
@@ -480,6 +479,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            width: 100%;
         }
         
         .music-controls {
@@ -487,6 +487,7 @@
             align-items: center;
             gap: 10px;
             margin-top: 12px;
+            width: 100%;
         }
         
         .music-toggle {
@@ -513,6 +514,7 @@
             margin-top: 8px;
             overflow: hidden;
             cursor: pointer;
+            width: 100%;
         }
         
         .music-progress-bar {
@@ -527,6 +529,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            width: 100%;
         }
         
         .music-album {
@@ -567,6 +570,7 @@
             align-items: center;
             gap: 8px;
             margin-top: 8px;
+            width: 100%;
         }
         
         .volume-slider {
@@ -593,6 +597,7 @@
             overflow-y: auto;
             border-top: 1px solid var(--edge);
             padding-top: 12px;
+            width: 100%;
         }
         
         .playlist-item {
@@ -646,6 +651,15 @@
             text-overflow: ellipsis;
         }
         
+        .music-player-content {
+            display: none;
+            width: 100%;
+        }
+        
+        .music-player.expanded .music-player-content {
+            display: block;
+        }
+        
         /* ===== MEDIA QUERIES ===== */
         @media (max-width: 980px) {
             .drawer-inner {
@@ -664,6 +678,11 @@
             
             .island.open {
                 height: 80px;
+            }
+            
+            .music-player.expanded {
+                width: 90vw;
+                right: 5vw;
             }
         }
     </style>
@@ -869,50 +888,57 @@
     </main>
     
     <!-- ===== MUSIC PLAYER ===== -->
-    <div class="music-player collapsed" id="musicPlayer">
-        <div class="music-header">
-            <strong>Now Playing</strong>
-            <button class="icon-btn" id="toggleMusicPlayer" title="Collapse">
-                <i class="fa-solid fa-chevron-down"></i>
-            </button>
-        </div>
-        
-        <div class="music-info">
-            <div class="music-album">
-                <i class="fa-solid fa-music"></i>
+    <div class="music-player" id="musicPlayer">
+        <div class="music-player-content">
+            <div class="music-header">
+                <strong>Now Playing</strong>
+                <button class="icon-btn" id="toggleMusicPlayer" title="Collapse">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
             </div>
-            <div class="music-details">
-                <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
-                <div class="music-artist" id="currentSongInfo">Viz Collective</div>
-            </div>
-        </div>
-        
-        <div class="music-progress" id="progressBar">
-            <div class="music-progress-bar" id="progressFill"></div>
-        </div>
-        
-        <div class="music-controls">
-            <button class="music-toggle" id="playPauseBtn">
-                <i class="fa-solid fa-play"></i>
-            </button>
-            <div style="flex:1">
-                <div class="music-title">Viz Network Theme</div>
-                <div class="music-artist">
-                    Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+            
+            <div class="music-info">
+                <div class="music-album">
+                    <i class="fa-solid fa-music"></i>
+                </div>
+                <div class="music-details">
+                    <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
+                    <div class="music-artist" id="currentSongInfo">Viz Collective</div>
                 </div>
             </div>
-            <button class="icon-btn" id="volumeBtn" title="Volume">
-                <i class="fa-solid fa-volume-high"></i>
-            </button>
+            
+            <div class="music-progress" id="progressBar">
+                <div class="music-progress-bar" id="progressFill"></div>
+            </div>
+            
+            <div class="music-controls">
+                <button class="music-toggle" id="playPauseBtn">
+                    <i class="fa-solid fa-play"></i>
+                </button>
+                <div style="flex:1">
+                    <div class="music-title">Viz Network Theme</div>
+                    <div class="music-artist">
+                        Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                    </div>
+                </div>
+                <button class="icon-btn" id="volumeBtn" title="Volume">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+            
+            <div class="volume-control" id="volumeControl" style="display:none">
+                <i class="fa-solid fa-volume-low" style="color:var(--muted)"></i>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
+                <i class="fa-solid fa-volume-high" style="color:var(--muted)"></i>
+            </div>
+            
+            <div class="playlist" id="playlist"></div>
         </div>
         
-        <div class="volume-control" id="volumeControl" style="display:none">
-            <i class="fa-solid fa-volume-low" style="color:var(--muted)"></i>
-            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
-            <i class="fa-solid fa-volume-high" style="color:var(--muted)"></i>
+        <!-- Mini player view (shown when collapsed) -->
+        <div class="music-mini-player">
+            <i class="fa-solid fa-music"></i>
         </div>
-        
-        <div class="playlist" id="playlist"></div>
     </div>
 
     <!-- Hidden YouTube Player -->
@@ -945,7 +971,7 @@
     
     <!-- ===== DIRECTORY MODAL ===== -->
     <dialog id="directory" style="border:none;padding:0;background:transparent">
-        <div style="background:rgba(9,14,25,.92);border:1px solid var(--edge);border-radius:16px;width:min(96vw,840px);padding:16px">
+        <div style="background:rgba(9,14,25,.92);border:1px solid var(--edge);border-radius:16px;width:min(96vw,840px;padding:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
                 <h3 style="margin:0">Clan Members</h3>
                 <div style="display:flex;gap:8px;align-items:center">
@@ -1143,15 +1169,16 @@
         ];
         
         // Toggle music player expanded/collapsed state
+        musicPlayer.addEventListener("click", (e) => {
+            // Only toggle if clicking on the player itself, not on child elements
+            if (e.target === musicPlayer) {
+                musicPlayer.classList.toggle("expanded");
+            }
+        });
+        
         toggleMusicPlayer.addEventListener("click", (e) => {
             e.stopPropagation();
-            if (musicPlayer.classList.contains("collapsed")) {
-                musicPlayer.classList.remove("collapsed");
-                musicPlayer.classList.add("expanded");
-            } else {
-                musicPlayer.classList.remove("expanded");
-                musicPlayer.classList.add("collapsed");
-            }
+            musicPlayer.classList.remove("expanded");
         });
         
         // Toggle volume control
@@ -1260,7 +1287,7 @@
         
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 10);
+            const secs = Math.floor(seconds % 60);
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
         
