@@ -770,6 +770,8 @@
             <span>🎯 Goal: Get more Members, Tools, Members again. </span>
             <span>•</span>
             <span>💬 Join our Discord. </span>
+        </div>
+    </div>
  
     <!-- ===== MAIN CONTENT ===== -->
     <main class="container">
@@ -804,7 +806,7 @@
         <section class="card" id="feature">
             <h2>Featured Member</h2>
             <div class="feature">
-                <img id="featAvatar" src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.pinterest.com%2Fpin%2Fblue-blank-pfp-icon--784822672569788985%2F&psig=AOvVaw0JtSZydqn8zvYBGiM7G-jY&ust=1757386664346000&source=images&cd=vfe&opi=89978449&ved=0CBYQjRxqFwoTCPCUltGVyI8DFQAAAAAdAAAAABAE" alt="Member"/>
+                <img id="featAvatar" src="https://via.placeholder.com/60" alt="Member"/>
                 <div>
                     <div id="featName" style="font-weight:700">No Player Detected</div>
                     <div id="featDesc" style="color:var(--muted)">???</div>
@@ -878,8 +880,8 @@
                 <i class="fa-solid fa-music"></i>
             </div>
             <div class="music-details">
-                <div class="music-title">Viz Network Theme</div>
-                <div class="music-artist">Viz Collective</div>
+                <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
+                <div class="music-artist" id="currentSongInfo">Viz Collective</div>
             </div>
         </div>
         
@@ -892,8 +894,10 @@
                 <i class="fa-solid fa-play"></i>
             </button>
             <div style="flex:1">
-                <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
-                <div class="music-artist" id="currentSongInfo">Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span></div>
+                <div class="music-title">Viz Network Theme</div>
+                <div class="music-artist">
+                    Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                </div>
             </div>
             <button class="icon-btn" id="volumeBtn" title="Volume">
                 <i class="fa-solid fa-volume-high"></i>
@@ -908,6 +912,9 @@
         
         <div class="playlist" id="playlist"></div>
     </div>
+
+    <!-- Hidden YouTube Player -->
+    <div id="ytPlayer"></div>
     
     <!-- ===== AUTH MODAL ===== -->
     <dialog id="auth" style="border:none;padding:0;background:transparent">
@@ -954,144 +961,87 @@
     <!-- ===== FOOTER ===== -->
     <footer>  © 2024 - 2025 Viz-Network - viznetwork.org - All rights reserved. </footer>
     
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
     <!-- ===== JAVASCRIPT ===== -->
     <script>
         // ===== DOMAIN PROTECTION =====
         if (window.location.hostname !== "viznetwork.org") {
             document.getElementById("domainProtection").style.display = "flex";
             document.body.style.overflow = "hidden";
-            throw new Error("Domain not authorized");
+            throw new Error("Domain protection triggered");
         }
         
         // ===== PARTICLE NETWORK =====
-        const canvas = document.getElementById('particle-network');
-        const ctx = canvas.getContext('2d');
-        const tooltip = document.getElementById('tooltip');
-        
+        const canvas = document.getElementById("particle-network");
+        const ctx = canvas.getContext("2d");
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
         let particles = [];
-        const numParticles = 60;
-        const maxDistance = 150;
-        const messages = [
-            "Stay Viz.",
-            "Network Strong.",
-            "Glory Awaits.",
-            "Linked in Unity.",
-            "Power in Connection."
-        ];
+        const particleCount = 120;
         
         class Particle {
-            constructor(x, y, dx, dy, radius, hasMessage) {
-                this.x = x;
-                this.y = y;
-                this.dx = dx;
-                this.dy = dy;
-                this.radius = radius;
-                this.hasMessage = hasMessage;
-                this.message = hasMessage ? messages[Math.floor(Math.random() * messages.length)] : null;
-            }
-            
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-                ctx.fillStyle = this.hasMessage ? '#0F468B' : 'rgba(255,255,255,0.6)';
-                ctx.shadowBlur = this.hasMessage ? 20 : 0;
-                ctx.shadowColor = '#0F468B';
-                ctx.fill();
-                ctx.closePath();
-                ctx.shadowBlur = 0;
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = `rgba(100, 160, 255, ${Math.random() * 0.25 + 0.05})`;
             }
             
             update() {
-                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
-                    this.dx = -this.dx;
-                }
+                this.x += this.speedX;
+                this.y += this.speedY;
                 
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    this.dy = -this.dy;
-                }
-                
-                this.x += this.dx;
-                this.y += this.dy;
-                this.draw();
+                if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+                if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
         
         function initParticles() {
             particles = [];
-            
-            for (let i = 0; i < numParticles; i++) {
-                const radius = 3;
-                const x = Math.random() * (canvas.width - radius * 2) + radius;
-                const y = Math.random() * (canvas.height - radius * 2) + radius;
-                const dx = (Math.random() - 0.5) * 1.5;
-                const dy = (Math.random() - 0.5) * 1.5;
-                const hasMessage = Math.random() < 0.25;
-                
-                particles.push(new Particle(x, y, dx, dy, radius, hasMessage));
-            }
-        }
-        
-        function connectParticles() {
-            for (let a = 0; a < particles.length; a++) {
-                for (let b = a + 1; b < particles.length; b++) {
-                    const dx = particles[a].x - particles[b].x;
-                    const dy = particles[a].y - particles[b].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < maxDistance) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = 'rgba(15,70,139,' + (1 - distance / maxDistance) + ')';
-                        ctx.lineWidth = 1;
-                        ctx.moveTo(particles[a].x, particles[a].y);
-                        ctx.lineTo(particles[b].x, particles[b].y);
-                        ctx.stroke();
-                        ctx.closePath();
-                    }
-                }
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
             }
         }
         
         function animateParticles() {
-            requestAnimationFrame(animateParticles);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            particles.forEach(p => p.update());
-            connectParticles();
-        }
-        
-        function showTooltip(x, y, message) {
-            tooltip.style.left = x + 15 + 'px';
-            tooltip.style.top = y + 15 + 'px';
-            tooltip.textContent = message;
-            tooltip.style.opacity = 1;
-        }
-        
-        function hideTooltip() {
-            tooltip.style.opacity = 0;
-        }
-        
-        canvas.addEventListener('mousemove', e => {
-            let found = false;
-            
-            for (let p of particles) {
-                const dx = e.offsetX - p.x;
-                const dy = e.offsetY - p.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
                 
-                if (distance < p.radius + 8 && p.hasMessage) {
-                    showTooltip(e.pageX, e.pageY, p.message);
-                    found = true;
-                    break;
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.1 * (1 - distance/100)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
                 }
             }
             
-            if (!found) hideTooltip();
-        });
+            requestAnimationFrame(animateParticles);
+        }
         
-        window.addEventListener('resize', () => {
+        window.addEventListener("resize", () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             initParticles();
@@ -1100,55 +1050,263 @@
         initParticles();
         animateParticles();
         
-        // ===== MUSIC PLAYER =====
-        const musicPlayer = document.getElementById('musicPlayer');
-        const toggleMusicPlayer = document.getElementById('toggleMusicPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const volumeBtn = document.getElementById('volumeBtn');
-        const volumeControl = document.getElementById('volumeControl');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const currentTimeEl = document.getElementById('currentTime');
-        const totalTimeEl = document.getElementById('totalTime');
-        const currentSongTitle = document.getElementById('currentSongTitle');
-        const currentSongInfo = document.getElementById('currentSongInfo');
-        const playlistEl = document.getElementById('playlist');
+        // ===== DYNAMIC ISLAND =====
+        const island = document.getElementById("island");
+        const drawer = document.getElementById("drawer");
+        const toggleIsland = document.getElementById("toggleIsland");
         
-        let isPlaying = false;
-        let currentSongIndex = 0;
-        let audioContext;
-        let audioElement;
-        let gainNode;
-        let startedPlaying = false;
+        toggleIsland.addEventListener("click", (e) => {
+            e.stopPropagation();
+            island.classList.toggle("open");
+        });
         
-        const playlist = [
+        document.addEventListener("click", (e) => {
+            if (!island.contains(e.target) && island.classList.contains("open")) {
+                island.classList.remove("open");
+            }
+        });
+        
+        // ===== TOOLTIP =====
+        const tooltip = document.getElementById("tooltip");
+        const tooltipElements = document.querySelectorAll("[title]");
+        
+        tooltipElements.forEach(el => {
+            const title = el.getAttribute("title");
+            el.removeAttribute("title");
+            
+            el.addEventListener("mouseenter", (e) => {
+                tooltip.textContent = title;
+                tooltip.style.opacity = "1";
+                tooltip.style.top = `${e.clientY + 15}px`;
+                tooltip.style.left = `${e.clientX + 15}px`;
+            });
+            
+            el.addEventListener("mouseleave", () => {
+                tooltip.style.opacity = "0";
+            });
+        });
+        
+        // ===== LOGIN MODAL =====
+        const loginBtn = document.getElementById("loginBtn");
+        const authModal = document.getElementById("auth");
+        
+        loginBtn.addEventListener("click", () => {
+            authModal.showModal();
+        });
+        
+        // ===== TICKER =====
+        const marquee = document.getElementById("marquee");
+        const marqueeContent = marquee.innerHTML;
+        marquee.innerHTML = marqueeContent + marqueeContent;
+        
+        // ===== FEATURED MEMBER =====
+        const members = [
             {
-                title: "Viz Network Theme",
-                artist: "Viz Collective",
-                duration: "3:30",
-                url: "https://youtu.be/tBfWb5IrbOI?si=23zQZMj_7QPP1Rpx"
+                name: "Viz Leader",
+                desc: "Founder & Developer",
+                badges: ["👑", "⚡", "💻"],
+                avatar: "https://via.placeholder.com/60/0F468B/ffffff?text=V"
+            },
+            {
+                name: "Viz Developer",
+                desc: "Tool Developer",
+                badges: ["⚡", "💻"],
+                avatar: "https://via.placeholder.com/60/0F468B/ffffff?text=D"
+            },
+            {
+                name: "Viz Moderator",
+                desc: "Community Manager",
+                badges: ["🛡️", "⚡"],
+                avatar: "https://via.placeholder.com/60/0F468B/ffffff?text=M"
             }
         ];
         
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        function updateFeaturedMember() {
+            const member = members[Math.floor(Math.random() * members.length)];
+            document.getElementById("featName").textContent = member.name;
+            document.getElementById("featDesc").textContent = member.desc;
+            document.getElementById("featAvatar").src = member.avatar;
+            
+            const badgeContainer = document.getElementById("featBadges");
+            badgeContainer.innerHTML = "";
+            
+            member.badges.forEach(badge => {
+                const span = document.createElement("span");
+                span.className = "badge";
+                span.textContent = badge;
+                badgeContainer.appendChild(span);
+            });
         }
         
-        function initPlaylist() {
-            playlistEl.innerHTML = '';
+        updateFeaturedMember();
+        setInterval(updateFeaturedMember, 10000);
+        
+        // ===== DIRECTORY =====
+        const directoryModal = document.getElementById("directory");
+        const usersGrid = document.getElementById("usersGrid");
+        const searchUsers = document.getElementById("searchUsers");
+        
+        // Mock user data
+        const users = Array.from({ length: 20 }, (_, i) => ({
+            name: `Viz Member ${i + 1}`,
+            role: i % 5 === 0 ? "Admin" : i % 3 === 0 ? "Mod" : "Member",
+            avatar: `https://via.placeholder.com/60/0F468B/ffffff?text=${i+1}`
+        }));
+        
+        function renderUsers(filter = "") {
+            usersGrid.innerHTML = "";
+            
+            users
+                .filter(user => user.name.toLowerCase().includes(filter.toLowerCase()))
+                .forEach(user => {
+                    const userEl = document.createElement("div");
+                    userEl.className = "feature";
+                    userEl.innerHTML = `
+                        <img src="${user.avatar}" alt="${user.name}">
+                        <div>
+                            <div style="font-weight:700">${user.name}</div>
+                            <div style="color:var(--muted)">${user.role}</div>
+                        </div>
+                    `;
+                    usersGrid.appendChild(userEl);
+                });
+        }
+        
+        searchUsers.addEventListener("input", () => {
+            renderUsers(searchUsers.value);
+        });
+        
+        document.querySelectorAll('[onclick*="directory"]').forEach(el => {
+            el.addEventListener("click", () => {
+                renderUsers();
+                directoryModal.showModal();
+            });
+        });
+        
+        // ===== MUSIC PLAYER =====
+        let player;
+        const musicPlayer = document.getElementById("musicPlayer");
+        const toggleMusicPlayer = document.getElementById("toggleMusicPlayer");
+        const playPauseBtn = document.getElementById("playPauseBtn");
+        const progressFill = document.getElementById("progressFill");
+        const currentTimeEl = document.getElementById("currentTime");
+        const totalTimeEl = document.getElementById("totalTime");
+        const volumeSlider = document.getElementById("volumeSlider");
+        const volumeBtn = document.getElementById("volumeBtn");
+        const volumeControl = document.getElementById("volumeControl");
+        const playlistContainer = document.getElementById("playlist");
+        const progressBar = document.getElementById("progressBar");
+        
+        // Playlist
+        const playlist = [
+            { title: "Viz Network Theme", artist: "Viz Collective", videoId: "tBfWb5IrbOI" },
+            { title: "Synthwave Vibes", artist: "Retrowave", videoId: "MVPTGNGiI-4" },
+            { title: "Cyber Dreams", artist: "Neon Skyline", videoId: "4VR-6AS0-l4" }
+        ];
+        
+        let currentSongIndex = 0;
+        
+        // Create YouTube player
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player("ytPlayer", {
+                height: "0",
+                width: "0",
+                videoId: playlist[currentSongIndex].videoId,
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+        
+        // When player is ready
+        function onPlayerReady(event) {
+            totalTimeEl.textContent = formatTime(player.getDuration());
+            player.setVolume(volumeSlider.value * 100);
+            renderPlaylist();
+        }
+        
+        // Handle state changes
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                requestAnimationFrame(updateProgress);
+            } else if (event.data === YT.PlayerState.PAUSED) {
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+            } else if (event.data === YT.PlayerState.ENDED) {
+                playNextSong();
+            }
+        }
+        
+        // Play / Pause
+        playPauseBtn.addEventListener("click", () => {
+            const state = player.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        });
+        
+        // Volume toggle + slider
+        volumeBtn.addEventListener("click", () => {
+            volumeControl.style.display =
+                volumeControl.style.display === "none" ? "flex" : "none";
+        });
+        
+        volumeSlider.addEventListener("input", () => {
+            player.setVolume(volumeSlider.value * 100);
+        });
+        
+        // Update progress bar
+        function updateProgress() {
+            if (player && player.getCurrentTime) {
+                const current = player.getCurrentTime();
+                const total = player.getDuration();
+                currentTimeEl.textContent = formatTime(current);
+                progressFill.style.width = `${(current / total) * 100}%`;
+                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    requestAnimationFrame(updateProgress);
+                }
+            }
+        }
+        
+        // Format seconds → mm:ss
+        function formatTime(sec) {
+            sec = Math.floor(sec);
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${m}:${s.toString().padStart(2, "0")}`;
+        }
+        
+        // Toggle music player
+        toggleMusicPlayer.addEventListener("click", () => {
+            musicPlayer.classList.toggle("collapsed");
+            musicPlayer.classList.toggle("expanded");
+            
+            if (musicPlayer.classList.contains("collapsed")) {
+                toggleMusicPlayer.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+                toggleMusicPlayer.setAttribute("title", "Expand");
+            } else {
+                toggleMusicPlayer.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+                toggleMusicPlayer.setAttribute("title", "Collapse");
+            }
+        });
+        
+        // Render playlist
+        function renderPlaylist() {
+            playlistContainer.innerHTML = "";
             
             playlist.forEach((song, index) => {
-                const item = document.createElement('div');
-                item.className = 'playlist-item';
-                
-                if (index === currentSongIndex) {
-                    item.classList.add('active');
-                }
-                
-                item.innerHTML = `
+                const songEl = document.createElement("div");
+                songEl.className = `playlist-item ${index === currentSongIndex ? "active" : ""}`;
+                songEl.innerHTML = `
                     <div class="playlist-item-album">
                         <i class="fa-solid fa-music"></i>
                     </div>
@@ -1158,241 +1316,51 @@
                     </div>
                 `;
                 
-                item.addEventListener('click', () => {
+                songEl.addEventListener("click", () => {
                     currentSongIndex = index;
-                    loadSong();
-                    playSong();
-                    updatePlaylistUI();
+                    player.loadVideoById(song.videoId);
+                    player.playVideo();
+                    updateSongInfo();
+                    renderPlaylist();
                 });
                 
-                playlistEl.appendChild(item);
+                playlistContainer.appendChild(songEl);
             });
         }
         
-        function updatePlaylistUI() {
-            const items = playlistEl.querySelectorAll('.playlist-item');
-            
-            items.forEach((item, index) => {
-                if (index === currentSongIndex) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-        }
-        
-        function loadSong() {
-            if (audioElement) {
-                audioElement.pause();
-            }
-            
-            audioElement = new Audio();
-            audioElement.crossOrigin = "anonymous";
-            
+        // Update song info
+        function updateSongInfo() {
             const song = playlist[currentSongIndex];
-            currentSongTitle.textContent = song.title;
-            currentSongInfo.textContent = `${song.artist} • 0:00 / ${song.duration}`;
-            totalTimeEl.textContent = song.duration;
+            document.getElementById("currentSongTitle").textContent = song.title;
+            document.getElementById("currentSongInfo").textContent = song.artist;
             
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                gainNode = audioContext.createGain();
-                gainNode.connect(audioContext.destination);
-                
-                const source = audioContext.createMediaElementSource(audioElement);
-                source.connect(gainNode);
-                gainNode.gain.value = volumeSlider.value;
+            const controlsTitle = document.querySelector(".music-controls .music-title");
+            const controlsArtist = document.querySelector(".music-controls .music-artist");
+            
+            if (controlsTitle) controlsTitle.textContent = song.title;
+            if (controlsArtist) {
+                controlsArtist.innerHTML = `${song.artist} • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>`;
             }
         }
         
-        function playSong() {
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-            audioElement.play().then(() => {
-                isPlaying = true;
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                startedPlaying = true;
-                
-                audioElement.addEventListener('timeupdate', () => {
-                    const progress = (audioElement.currentTime / audioElement.duration) * 100;
-                    progressFill.style.width = `${progress}%`;
-                    currentTimeEl.textContent = formatTime(audioElement.currentTime);
-                });
-                
-                audioElement.addEventListener('ended', () => {
-                    nextSong();
-                });
-            }).catch(error => {
-                console.error("Playback failed:", error);
-                currentSongInfo.textContent = "Demo mode - YouTube API needed for full playback";
-            });
-        }
-        
-        function pauseSong() {
-            audioElement.pause();
-            isPlaying = false;
-            playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-        }
-        
-        function nextSong() {
+        // Play next song
+        function playNextSong() {
             currentSongIndex = (currentSongIndex + 1) % playlist.length;
-            loadSong();
-            playSong();
-            updatePlaylistUI();
+            player.loadVideoById(playlist[currentSongIndex].videoId);
+            player.playVideo();
+            updateSongInfo();
+            renderPlaylist();
         }
         
-        function prevSong() {
-            currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
-            loadSong();
-            playSong();
-            updatePlaylistUI();
-        }
-        
-        function initPlayer() {
-            loadSong();
-            initPlaylist();
-            
-            toggleMusicPlayer.addEventListener('click', (e) => {
-                e.stopPropagation();
-                musicPlayer.classList.toggle('collapsed');
-                musicPlayer.classList.toggle('expanded');
-                
-                if (musicPlayer.classList.contains('expanded')) {
-                    toggleMusicPlayer.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
-                } else {
-                    toggleMusicPlayer.innerHTML = '<i class="fa-solid fa-music"></i>';
-                }
-            });
-            
-            playPauseBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                
-                if (!startedPlaying) {
-                    playSong();
-                } else {
-                    if (isPlaying) {
-                        pauseSong();
-                    } else {
-                        playSong();
-                    }
-                }
-            });
-            
-            volumeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                volumeControl.style.display = volumeControl.style.display === 'none' ? 'flex' : 'none';
-            });
-            
-            volumeSlider.addEventListener('input', () => {
-                if (gainNode) {
-                    gainNode.gain.value = volumeSlider.value;
-                }
-            });
-            
-            progressBar.addEventListener('click', (e) => {
-                if (audioElement && audioElement.duration) {
-                    const rect = progressBar.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const width = rect.width;
-                    const seekTime = (clickX / width) * audioElement.duration;
-                    audioElement.currentTime = seekTime;
-                }
-            });
-            
-            musicPlayer.addEventListener('click', (e) => {
-                if (musicPlayer.classList.contains('collapsed')) {
-                    musicPlayer.classList.remove('collapsed');
-                    musicPlayer.classList.add('expanded');
-                    toggleMusicPlayer.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
-                }
-            });
-        }
-        
-        initPlayer();
-        
-        // ===== DYNAMIC ISLAND FUNCTIONALITY =====
-        const island = document.getElementById('island');
-        const drawer = document.getElementById('drawer');
-        const toggleBtn = document.getElementById('toggleIsland');
-        const loginBtn = document.getElementById('loginBtn');
-        const auth = document.getElementById('auth');
-        
-        function toggleIsland() {
-            island.classList.toggle('open');
-        }
-        
-        toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleIsland();
-        });
-        
-        island.addEventListener('click', (e) => {
-            if (e.target === island) toggleIsland();
-        });
-        
-        document.addEventListener('click', (e) => {
-            if (!island.contains(e.target)) island.classList.remove('open');
-        });
-        
-        loginBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            auth.showModal();
-        });
-        
-        // ===== TICKER =====
-        const marquee = document.getElementById('marquee');
-        marquee.innerHTML = marquee.innerHTML + marquee.innerHTML;
-        
-        // ===== FEATURED MEMBER BADGES =====
-        const feats = ['Strategist', 'Top Fragger', 'Seasoned Raider', 'Support Lead', 'Intel Scout'];
-        const badgeWrap = document.getElementById('featBadges');
-        
-        function shuffle(a) {
-            for (let i = a.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [a[i], a[j]] = [a[j], a[i]];
+        // Progress bar click to seek
+        progressBar.addEventListener("click", (e) => {
+            if (player && player.getDuration) {
+                const rect = progressBar.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percent = clickX / rect.width;
+                const newTime = player.getDuration() * percent;
+                player.seekTo(newTime, true);
             }
-            return a;
-        }
-        
-        function renderBadges() {
-            badgeWrap.innerHTML = shuffle([...feats]).slice(0, 3).map(t => `<span class="badge">${t}</span>`).join('');
-        }
-        
-        renderBadges();
-        setInterval(renderBadges, 6000);
-        
-        // ===== MEMBER DIRECTORY =====
-        const usersGrid = document.getElementById('usersGrid');
-        const searchInput = document.getElementById('searchUsers');
-        
-        const MOCK = Array.from({ length: 14 }).map((_, i) => ({
-            name: `[Viz] User${i + 1}`,
-            bio: ['Operator', 'Builder', 'Scout', 'Support'][i % 4],
-            status: ['online', 'offline', 'away'][i % 3],
-            photo: `https://picsum.photos/seed/viz${i}/300/200`
-        }));
-        
-        function renderUsers(list) {
-            usersGrid.innerHTML = list.map(u => `
-                <div class="card" style="padding:0;overflow:hidden">
-                    <img src="${u.photo}" alt="${u.name}" style="width:100%;height:140px;object-fit:cover">
-                    <div style="padding:12px">
-                        <div style="font-weight:700">${u.name}</div>
-                        <div style="color:var(--muted);font-size:.9rem;margin:6px 0 10px">${u.bio}</div>
-                        <span class="chip" style="background:${u.status === 'online' ? 'rgba(50,205,50,.18)' : 'rgba(255,255,255,.06)'}">${u.status}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-        
-        renderUsers(MOCK);
-        
-        searchInput?.addEventListener('input', () => {
-            const q = searchInput.value.toLowerCase();
-            renderUsers(MOCK.filter(u => u.name.toLowerCase().includes(q)));
         });
     </script>
 </body>
