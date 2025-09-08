@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Viz Network</title>
+    
+    <!-- ===== FONT IMPORTS ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- ===== STYLES ===== -->
+    <style>
+        /* ===== CSS VARIABLES ===== */
+        :root {
+            --viz: #0F468B;
+            --viz-600: #1356ab;
+            --viz-300: #64a0ff;
+            --ink: #0b1220;
+            --panel: #0e1a2e;
+            --edge: rgba(255,255,255,.08);
+            --text: #d9e9ff;
+            --muted: #8fb0d9;
+            --glass: rgba(15,70,139,.18);
+            --glow: 0 0 0 1px rgba(15,70,139,.25),0 8px 30px rgba(15,70,139,.35),inset 0 0 18px rgba(15,70,139,.28);
+            --radius: 18px;
+            --speed: 300ms;
+        }
+        
+        /* ===== BASE STYLES ===== */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            color: var(--text);
+            background: radial-gradient(1200px 600px at 70% -10%, rgba(100,160,255,.16), transparent 60%),
+                        radial-gradient(900px 600px at -10% 10%, rgba(15,70,139,.25), transparent 50%),
+                        linear-gradient(180deg, #0a1222 0%, #070c17 100%);
+            min-height: 100dvh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* ===== DOMAIN PROTECTION ===== */
+        .domain-protection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #ff0000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            font-family: 'Orbitron', monospace;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .domain-protection h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+        }
+        
+        .domain-protection .skull {
+            font-size: 8rem;
+            margin: 2rem 0;
+            filter: drop-shadow(0 0 15px #ff0000);
+        }
+        
+        .domain-protection p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-top: 2rem;
+            color: #ccc;
+        }
+        
+        /* ===== PARTICLE NETWORK ===== */
+        canvas#particle-network {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* ===== TOOLTIP ===== */
+        .tooltip {
+            position: absolute;
+            background: rgba(15,70,139,0.9);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 100;
+        }
+        
+        /* ===== DYNAMIC ISLAND ===== */
+        .island-wrap {
+            position: sticky;
+            top: 10px;
+            display: flex;
+            justify-content: center;
+            z-index: 30;
+            padding: 10px 0 0;
+        }
+        
+        .island {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 52px;
+            min-width: 240px;
+            padding: 0 16px 0 64px;
+            background: rgba(8,14,26,.6);
+            backdrop-filter: blur(16px) saturate(120%);
+            border: 1px solid var(--edge);
+            border-radius: 999px;
+            box-shadow: var(--glow);
+            transition: all var(--speed) ease;
+            cursor: pointer;
+        }
+        
+        .island:hover {
+            transform: translateY(-1px);
+        }
+        
+        .island.open {
+            min-width: min(92vw,980px);
+            height: 72px;
+        }
+        
+        .camera {
+            position: absolute;
+            left: 10px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(closest-side, #18243b 70%, #0b1628 71%),
+                        radial-gradient(circle at 70% 35%, rgba(255,255,255,.25) 0 18%, transparent 19% 100%);
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.55);
+        }
+        
+        .camera::after {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 11px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #9fd1ff 0 50%, transparent 52%);
+            filter: blur(.2px);
+        }
+        
+        .pill-label {
+            font: 600 14px/1 Inter, sans-serif;
+            color: var(--muted);
+            letter-spacing: .2px;
+            white-space: nowrap;
+        }
+        
+        .island-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .icon-btn {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 1px solid var(--edge);
+            background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+            transition: all var(--speed) ease;
+            text-decoration: none;
+            color: var(--text);
+        }
+        
+        .icon-btn:hover {
+            box-shadow: 0 0 0 3px rgba(100,160,255,.12);
+            transform: translateY(-2px);
+        }
+        
+        /* ===== DRAWER ===== */
+        .drawer {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 62px;
+            display: none;
+        }
+        
+        .island.open + .drawer {
+            display: block;
+        }
+        
+        .drawer-inner {
+            margin: 10px auto 0;
+            width: min(96vw,1080px);
+            border-radius: 24px;
+            border: 1px solid var(--edge);
+            background: rgba(9,14,25,.6);
+            backdrop-filter: blur(18px) saturate(130%);
+            padding: 16px;
+            box-shadow: var(--glow);
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+        
+        /* ===== QUICK CARDS ===== */
+        .quick-card {
+            border: 1px solid var(--edge);
+            border-radius: 16px;
+            padding: 14px;
+            background: rgba(255,255,255,.02);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            transition: all var(--speed) ease;
+            cursor: pointer;
+        }
+        
+        .quick-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(15,70,139,.25);
+        }
+        
+        .quick-card i {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: var(--glass);
+            color: #cfe3ff;
+        }
+        
+        .quick-card b {
+            color: #fff;
+        }
+        
+        .quick-card span {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+        
+        /* ===== HEADER ===== */
+        header {
+            padding: 90px 16px 28px;
+            text-align: center;
+        }
+        
+        .brand {
+            font-family: Orbitron, Inter, sans-serif;
+            text-transform: uppercase;
+            letter-spacing: .3em;
+            font-weight: 700;
+            font-size: clamp(28px, 4vw, 44px);
+            color: #fff;
+        }
+        
+        .brand em {
+            font-style: normal;
+            color: var(--viz-300);
+            text-shadow: 0 0 22px rgba(100,160,255,.35);
+        }
+        
+        .tag {
+            margin: 10px auto 0;
+            max-width: 720px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+        
+        /* ===== TICKER ===== */
+        .ticker {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(90deg, rgba(100,160,255,.12), transparent 30% 70%, rgba(100,160,255,.12));
+            border-top: 1px solid var(--edge);
+            border-bottom: 1px solid var(--edge);
+        }
+        
+        .marquee {
+            display: flex;
+            gap: 40px;
+            padding: 10px 0;
+            white-space: nowrap;
+            will-change: transform;
+            animation: move 18s linear infinite;
+        }
+        
+        @keyframes move {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        
+        .marquee:hover {
+            animation-play-state: paused;
+        }
+        
+        /* ===== MAIN CONTENT ===== */
+        .container {
+            width: min(1200px, 92vw);
+            margin: 24px auto 80px;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 18px;
+        }
+        
+        /* ===== CARDS ===== */
+        .card {
+            background: rgba(255,255,255,.03);
+            border: 1px solid var(--edge);
+            border-radius: var(--radius);
+            padding: 18px;
+            box-shadow: var(--glow);
+        }
+        
+        .card h2 {
+            margin: 0 0 8px;
+            font: 700 20px/1.2 Orbitron, Inter, sans-serif;
+            letter-spacing: .06em;
+            color: #fff;
+        }
+        
+        .card p, .card li {
+            color: var(--text);
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        /* ===== CHIPS ===== */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--edge);
+            background: rgba(100,160,255,.06);
+        }
+        
+        /* ===== CALL TO ACTION ===== */
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: var(--viz);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,.08);
+            box-shadow: 0 10px 24px rgba(15,70,139,.35);
+        }
+        
+        .cta:hover {
+            background: var(--viz-600);
+        }
+        
+        /* ===== FEATURED MEMBER ===== */
+        .feature {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        
+        .feature img {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            object-fit: cover;
+            border: 1px solid var(--edge);
+        }
+        
+        /* ===== BADGES ===== */
+        .badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(100,160,255,.12);
+            border: 1px solid var(--edge);
+            font-size: .85rem;
+            color: #cfe3ff;
+        }
+        
+        /* ===== RANKS ===== */
+        .ranks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .rank {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--edge);
+            background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+            box-shadow: inset 0 0 0 1px rgba(100,160,255,.06);
+            font-weight: 700;
+        }
+        
+        /* ===== FOOTER ===== */
+        footer {
+            border-top: 1px solid var(--edge);
+            padding: 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+        
+        /* ===== MUSIC PLAYER ===== */
+        .music-player {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            background: rgba(7,12,23,.75);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--edge);
+            border-radius: 14px;
+            padding: 12px 14px;
+            box-shadow: var(--glow);
+            z-index: 20;
+            width: 260px;
+            transition: all var(--speed) ease;
+            overflow: hidden;
+        }
+        
+        .music-player.collapsed {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .music-player.expanded {
+            width: 260px;
+            height: auto;
+        }
+        
+        .music-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .music-toggle {
+            background: var(--viz);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .music-toggle:hover {
+            background: var(--viz-600);
+        }
+        
+        .music-progress {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .music-progress-bar {
+            height: 100%;
+            background: var(--viz-300);
+            width: 35%;
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+        
+        .music-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .music-album {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #0F468B, #64a0ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .music-details {
+            flex: 1;
+        }
+        
+        .music-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .music-artist {
+            font-size: 12px;
+            color: var(--muted);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--viz-300);
+            cursor: pointer;
+        }
+        
+        .playlist {
+            margin-top: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid var(--edge);
+            padding-top: 12px;
+        }
+        
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background var(--speed) ease;
+        }
+        
+        .playlist-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .playlist-item.active {
+            background: rgba(15,70,139,0.2);
+        }
+        
+        .playlist-item-album {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #0F468B, #64a0ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .playlist-item-info {
+            flex: 1;
+        }
+        
+        .playlist-item-title {
+            font-size: 12px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .playlist-item-artist {
+            font-size: 10px;
+            color: var(--muted);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* ===== MEDIA QUERIES ===== */
+        @media (max-width: 980px) {
+            .drawer-inner {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 520px) {
+            .grid-3 {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .island.open {
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== DOMAIN PROTECTION ===== -->
+    <div class="domain-protection" id="domainProtection" style="display:none">
+        <h1>DONT SKID THE CODE - [VIZ]</h1>
+        <div class="skull">💀</div>
+        <p> © - This content is Private and only available on the Viz-Network domain.</p>
+    </div>
+    
+    <!-- ===== PARTICLE BACKGROUND ===== -->
+    <canvas id="particle-network"></canvas>
+    
+    <!-- ===== TOOLTIP ===== -->
+    <div class="tooltip" id="tooltip"></div>
+    
+    <!-- ===== DYNAMIC ISLAND ===== -->
+    <div class="island-wrap">
+        <div class="island" id="island">
+            <div class="camera" aria-hidden="true"></div>
+            <div class="pill-label">Viz Network</div>
+            <div class="island-actions">
+                <a class="icon-btn" href="#about" title="About">
+                    <i class="fa-solid fa-circle-info"></i>
+                </a>
+                <a class="icon-btn" href="#projects" title="Projects">
+                    <i class="fa-solid fa-layer-group"></i>
+                </a>
+                <button class="icon-btn" id="loginBtn" title="Login">
+                    <i class="fa-regular fa-user"></i>
+                </button>
+                <button class="icon-btn" id="toggleIsland" title="Expand">
+                    <i class="fa-solid fa-ellipsis"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="drawer" id="drawer">
+            <div class="drawer-inner">
+                <div class="quick-card" onclick="document.querySelector('#about').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-compass"></i>
+                    <div>
+                        <b>About Viz</b><br>
+                        <span>Who we are & how to join</span>
+                    </div>
+                </div>
+                
+                <div class="quick-card" onclick="document.querySelector('#directory').showModal()">
+                    <i class="fa-solid fa-users"></i>
+                    <div>
+                        <b>Members</b><br>
+                        <span>Browse the directory</span>
+                    </div>
+                </div>
+                
+                <div class="quick-card" onclick="document.querySelector('#socials').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-brands fa-discord"></i>
+                    <div>
+                        <b>Discord</b><br>
+                        <span>Hop into our server</span>
+                    </div>
+                </div>
+                
+                <div class="quick-card" onclick="document.querySelector('#projects').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-wrench"></i>
+                    <div>
+                        <b>Projects</b><br>
+                        <span>What we're building</span>
+                    </div>
+                </div>
+                
+                <div class="quick-card" onclick="document.querySelector('#tutorials').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <div>
+                        <b>Tutorials</b><br>
+                        <span>Guides & resources</span>
+                    </div>
+                </div>
+                
+                <div class="quick-card" onclick="document.querySelector('#join').scrollIntoView({behavior:'smooth'})">
+                    <i class="fa-solid fa-door-open"></i>
+                    <div>
+                        <b>Join Viz</b><br>
+                        <span>Steps to get started</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== HEADER ===== -->
+    <header>
+        <h1 class="brand">[<em>Viz</em>] Network</h1>
+        <p class="tag"> Welcome to the [<em>Viz</em>] Network - ] [ - This Website Just Releases, have any problems? report it to the discord. </p>
+    </header>
+    
+    <!-- ===== TICKER ===== -->
+    <div class="ticker">
+        <div class="marquee" id="marquee">
+            <span>📢 New: [Viz] Website is now out. </span>
+            <span>•</span>
+            <span>🎯 Goal: Get more Members, Tools, Members again. </span>
+            <span>•</span>
+            <span>💬 Join our Discord. </span>
+        </div>
+    </div>
+ 
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="container">
+        <!-- ABOUT SECTION -->
+        <section class="card" id="about">
+            <h2>About Us</h2>
+            <p><b>[Viz]</b> is a community built around Rec Room raiding, events, and custom tools. We're focused on organization, quality raids, and sharing Intel.</p>
+            <ul>
+                <li>What you get — Active Clan, Events, and Tools.</li>
+                <li>What we build — Models, Uttilities, and Crash-Guns.</li>
+                <li>How to join — See the steps below, and join the discord.</li>
+            </ul>
+            <a class="cta" href="https://discord.gg/KvpxU6wfGa" target="_blank">
+                <i class="fa-brands fa-discord"></i> Join Discord
+            </a>
+        </section>
+        
+        <!-- PROJECTS SECTION -->
+        <section class="card" id="projects">
+            <h2>Projects</h2>
+            <div class="grid-3">
+                <div class="chip"><i class="fa-solid fa-bolt"></i> Crash‑guns Soon </div>
+                <div class="chip"><i class="fa-solid fa-shield-halved"></i> Raiders Soon</div>
+                <div class="chip"><i class="fa-solid fa-database"></i> Intel Feed</div>
+                <div class="chip"><i class="fa-solid fa-magnifying-glass"></i> Rec.net Profiles Soon </div>
+                <div class="chip"><i class="fa-solid fa-sitemap"></i> Member Tools Soon </div>
+                <div class="chip"><i class="fa-solid fa-film"></i> Video Tutorials Soon </div>
+            </div>
+        </section>
+        
+        <!-- FEATURED MEMBER SECTION -->
+        <section class="card" id="feature">
+            <h2>Featured Member</h2>
+            <div class="feature">
+                <img id="featAvatar" src="https://via.placeholder.com/60" alt="Member"/>
+                <div>
+                    <div id="featName" style="font-weight:700">No Player Detected</div>
+                    <div id="featDesc" style="color:var(--muted)">???</div>
+                    <div class="badges" id="featBadges"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- SOCIALS SECTION -->
+        <section class="card" id="socials">
+            <h2>Socials</h2>
+            <p>Follow along and connect with more raiders, and clans.</p>
+            <div class="grid-3">
+                <a class="cta" href="https://discord.gg/KvpxU6wfGa" target="_blank">
+                    <i class="fa-brands fa-discord"></i> Discord
+                </a>
+                <a class="cta" style="opacity:.65;pointer-events:none">
+                    <i class="fa-brands fa-youtube"></i> YouTube (Soon)
+                </a>
+                <a class="cta" style="opacity:.65;pointer-events:none">
+                    <i class="fa-brands fa-tiktok"></i> TikTok (Soon)
+                </a>
+            </div>
+        </section>
+        
+        <!-- RANKS SECTION -->
+        <section class="card" id="ranks">
+            <h2>Ranks</h2>
+            <div class="ranks">
+                <div class="rank">Member</div>
+                <div class="rank">Moderator</div>
+                <div class="rank">Developer</div>
+                <div class="rank">Co‑Administrator</div>
+                <div class="rank">Administrator</div>
+            </div>
+        </section>
+        
+        <!-- TUTORIALS SECTION -->
+        <section class="card" id="tutorials">
+            <h2>Tutorials</h2>
+            <p>Starter guides, how‑tos, and best practices. Drop your ideas in Discord and we'll add them here.</p>
+            <ul>
+                <li>Getting started with Viz tools</li>
+                <li>Safe raiding basics</li>
+                <li>Submitting a community build</li>
+            </ul>
+        </section>
+        
+        <!-- JOIN SECTION -->
+        <section class="card" id="join">
+            <h2>How to Join</h2>
+            <ol>
+                <li>Use the tag <b>[Viz]</b> in your RecRoom, and Discord name.</li>
+                <li>Join the <a class="cta" href="https://discord.gg/KvpxU6wfGa" target="_blank" style="display:inline-flex;margin:5px 0">
+                    <i class="fa-brands fa-discord"></i> Discord
+                </a>.</li>
+                <li> Join the Discord, and the RecRoom group to get crash guns. </li>
+            </ol>
+        </section>
+    </main>
+    
+    <!-- ===== MUSIC PLAYER ===== -->
+    <div class="music-player collapsed" id="musicPlayer">
+        <div class="music-header">
+            <strong>Now Playing</strong>
+            <button class="icon-btn" id="toggleMusicPlayer" title="Collapse">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+        </div>
+        
+        <div class="music-info">
+            <div class="music-album">
+                <i class="fa-solid fa-music"></i>
+            </div>
+            <div class="music-details">
+                <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
+                <div class="music-artist" id="currentSongInfo">Viz Collective</div>
+            </div>
+        </div>
+        
+        <div class="music-progress" id="progressBar">
+            <div class="music-progress-bar" id="progressFill"></div>
+        </div>
+        
+        <div class="music-controls">
+            <button class="music-toggle" id="playPauseBtn">
+                <i class="fa-solid fa-play"></i>
+            </button>
+            <div style="flex:1">
+                <div class="music-title">Viz Network Theme</div>
+                <div class="music-artist">
+                    Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                </div>
+            </div>
+            <button class="icon-btn" id="volumeBtn" title="Volume">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+        
+        <div class="volume-control" id="volumeControl" style="display:none">
+            <i class="fa-solid fa-volume-low" style="color:var(--muted)"></i>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
+            <i class="fa-solid fa-volume-high" style="color:var(--muted)"></i>
+        </div>
+        
+        <div class="playlist" id="playlist"></div>
+    </div>
+
+    <!-- Hidden YouTube Player -->
+    <div id="ytPlayer"></div>
+    
+    <!-- ===== AUTH MODAL ===== -->
+    <dialog id="auth" style="border:none;padding:0;background:transparent">
+        <form method="dialog" style="background:rgba(9,14,25,.9);border:1px solid var(--edge);border-radius:16px;padding:18px;width:min(92vw,420px);color:var(--text)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <h3 style="margin:0">Login</h3>
+                <button class="icon-btn" style="width:36px;height:36px" aria-label="Close" onclick="document.getElementById('auth').close()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <label>Email<br>
+                <input type="email" required style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--edge);background:#0b1424;color:#fff">
+            </label>
+            <br><br>
+            
+            <label>Password<br>
+                <input type="password" required minlength="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--edge);background:#0b1424;color:#fff">
+            </label>
+            <br><br>
+            
+            <button class="cta" style="width:100%;justify-content:center">Sign In</button>
+            <p style="color:var(--muted);font-size:.9rem;margin:12px 0 0">[Not Working]</p>
+        </form>
+    </dialog>
+    
+    <!-- ===== DIRECTORY MODAL ===== -->
+    <dialog id="directory" style="border:none;padding:0;background:transparent">
+        <div style="background:rgba(9,14,25,.92);border:1px solid var(--edge);border-radius:16px;width:min(96vw,840px);padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
+                <h3 style="margin:0">Clan Members</h3>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <input id="searchUsers" placeholder="Search members..." style="padding:10px 12px;border-radius:12px;border:1px solid var(--edge);background:#0b1424;color:#cfe3ff;min-width:220px">
+                    <button class="icon-btn" onclick="document.getElementById('directory').close()" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="usersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px"></div>
+        </div>
+    </dialog>
+    
+    <!-- ===== FOOTER ===== -->
+    <footer>  © 2024 - 2025 Viz-Network - viznetwork.org - All rights reserved. </footer>
+    
+    <!-- Load YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
+    <!-- ===== JAVASCRIPT ===== -->
+    <script>
+        // ===== DOMAIN PROTECTION =====
+        if (window.location.hostname !== "viznetwork.org") {
+            document.getElementById("domainProtection").style.display = "flex";
+            document.body.style.overflow = "hidden";
+            throw new Error("Domain protection triggered");
+        }
+        
+        // ===== PARTICLE NETWORK =====
+        const canvas = document.getElementById("particle-network");
+        const ctx = canvas.getContext("2d");
+        let particles = [];
+        let mouse = { x: null, y: null, radius: 80 };
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener("resize", () => {
+            resizeCanvas();
+            initParticles();
+        });
+        
+        window.addEventListener("mousemove", (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = `rgba(${Math.random() * 70 + 15}, ${Math.random() * 70 + 70}, ${Math.random() * 255}, ${Math.random() * 0.3 + 0.1})`;
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+                
+                // Mouse interaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    this.speedX = dx * 0.02;
+                    this.speedY = dy * 0.02;
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        function initParticles() {
+            particles = [];
+            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                // Connect particles
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.2 - distance/500})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            requestAnimationFrame(animateParticles);
+        }
+        
+        resizeCanvas();
+        initParticles();
+        animateParticles();
+        
+        // ===== DYNAMIC ISLAND =====
+        const island = document.getElementById("island");
+        const drawer = document.getElementById("drawer");
+        const toggleIsland = document.getElementById("toggleIsland");
+        
+        toggleIsland.addEventListener("click", (e) => {
+            e.stopPropagation();
+            island.classList.toggle("open");
+        });
+        
+        document.addEventListener("click", (e) => {
+            if (!island.contains(e.target) && !drawer.contains(e.target)) {
+                island.classList.remove("open");
+            }
+        });
+        
+        // ===== TOOLTIPS =====
+        const tooltip = document.getElementById("tooltip");
+        const tooltipElements = document.querySelectorAll("[title]");
+        
+        tooltipElements.forEach(el => {
+            el.addEventListener("mouseenter", (e) => {
+                const rect = el.getBoundingClientRect();
+                tooltip.textContent = el.getAttribute("title");
+                tooltip.style.left = rect.left + rect.width/2 - tooltip.offsetWidth/2 + "px";
+                tooltip.style.top = rect.top - 40 + "px";
+                tooltip.style.opacity = "1";
+            });
+            
+            el.addEventListener("mouseleave", () => {
+                tooltip.style.opacity = "0";
+            });
+        });
+        
+        // ===== AUTH MODAL =====
+        const loginBtn = document.getElementById("loginBtn");
+        const authModal = document.getElementById("auth");
+        
+        loginBtn.addEventListener("click", () => {
+            authModal.showModal();
+        });
+        
+        // ===== MUSIC PLAYER =====
+        const musicPlayer = document.getElementById("musicPlayer");
+        const toggleMusicPlayer = document.getElementById("toggleMusicPlayer");
+        const playPauseBtn = document.getElementById("playPauseBtn");
+        const volumeBtn = document.getElementById("volumeBtn");
+        const volumeControl = document.getElementById("volumeControl");
+        const volumeSlider = document.getElementById("volumeSlider");
+        const progressBar = document.getElementById("progressBar");
+        const progressFill = document.getElementById("progressFill");
+        const currentTimeEl = document.getElementById("currentTime");
+        const totalTimeEl = document.getElementById("totalTime");
+        const currentSongTitle = document.getElementById("currentSongTitle");
+        const currentSongInfo = document.getElementById("currentSongInfo");
+        const playlistEl = document.getElementById("playlist");
+        
+        let player;
+        let isPlaying = false;
+        let currentSongIndex = 0;
+        let updateTimer;
+        
+        const playlist = [
+            {
+                title: "Viz Network Theme",
+                artist: "Viz Collective",
+                videoId: "dQw4w9WgXcQ" // Replace with actual YouTube video ID
+            }
+        ];
+        
+        // Toggle music player expanded/collapsed state
+        toggleMusicPlayer.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (musicPlayer.classList.contains("collapsed")) {
+                musicPlayer.classList.remove("collapsed");
+                musicPlayer.classList.add("expanded");
+            } else {
+                musicPlayer.classList.remove("expanded");
+                musicPlayer.classList.add("collapsed");
+            }
+        });
+        
+        // Toggle volume control
+        volumeBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            volumeControl.style.display = volumeControl.style.display === "none" ? "flex" : "none";
+        });
+        
+        // Play/Pause button
+        playPauseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (isPlaying) {
+                player.pauseVideo();
+            } else {
+                player.playVideo();
+            }
+        });
+        
+        // Volume slider
+        volumeSlider.addEventListener("input", () => {
+            player.setVolume(volumeSlider.value * 100);
+        });
+        
+        // Progress bar click to seek
+        progressBar.addEventListener("click", (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            player.seekTo(player.getDuration() * percent);
+        });
+        
+        // Initialize YouTube player
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player("ytPlayer", {
+                height: "0",
+                width: "0",
+                videoId: playlist[currentSongIndex].videoId,
+                playerVars: {
+                    playsinline: 1,
+                    modestbranding: 1,
+                    controls: 0
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+        
+        function onPlayerReady(event) {
+            // Set initial volume
+            player.setVolume(volumeSlider.value * 100);
+            
+            // Set total time
+            const duration = player.getDuration();
+            totalTimeEl.textContent = formatTime(duration);
+            
+            // Create playlist items
+            playlist.forEach((song, index) => {
+                const item = document.createElement("div");
+                item.className = "playlist-item";
+                if (index === currentSongIndex) item.classList.add("active");
+                
+                item.innerHTML = `
+                    <div class="playlist-item-album">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div class="playlist-item-info">
+                        <div class="playlist-item-title">${song.title}</div>
+                        <div class="playlist-item-artist">${song.artist}</div>
+                    </div>
+                `;
+                
+                item.addEventListener("click", () => {
+                    if (index !== currentSongIndex) {
+                        currentSongIndex = index;
+                        player.loadVideoById(playlist[currentSongIndex].videoId);
+                        updatePlaylistUI();
+                    }
+                });
+                
+                playlistEl.appendChild(item);
+            });
+        }
+        
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                updateTimer = setInterval(updateProgress, 1000);
+            } else {
+                isPlaying = false;
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                clearInterval(updateTimer);
+            }
+        }
+        
+        function updateProgress() {
+            if (player && player.getCurrentTime) {
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                
+                currentTimeEl.textContent = formatTime(currentTime);
+                progressFill.style.width = `${(currentTime / duration) * 100}%`;
+            }
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 10);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        
+        function updatePlaylistUI() {
+            const playlistItems = playlistEl.querySelectorAll(".playlist-item");
+            playlistItems.forEach((item, index) => {
+                if (index === currentSongIndex) {
+                    item.classList.add("active");
+                } else {
+                    item.classList.remove("active");
+                }
+            });
+            
+            const currentSong = playlist[currentSongIndex];
+            currentSongTitle.textContent = currentSong.title;
+            currentSongInfo.textContent = currentSong.artist;
+        }
+        
+        // ===== MEMBER DIRECTORY =====
+        const usersGrid = document.getElementById("usersGrid");
+        const searchUsers = document.getElementById("searchUsers");
+        
+        // Sample user data
+        const users = [
+            { name: "Viz Admin", role: "Administrator", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Developer", role: "Developer", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Moderator", role: "Moderator", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Member", role: "Member", avatar: "https://via.placeholder.com/60" }
+        ];
+        
+        function renderUsersGrid(filter = "") {
+            usersGrid.innerHTML = "";
+            
+            users
+                .filter(user => user.name.toLowerCase().includes(filter.toLowerCase()))
+                .forEach(user => {
+                    const userCard = document.createElement("div");
+                    userCard.className = "quick-card";
+                    userCard.innerHTML = `
+                        <img src="${user.avatar}" width="40" height="40" style="border-radius:10px">
+                        <div>
+                            <b>${user.name}</b><br>
+                            <span>${user.role}</span>
+                        </div>
+                    `;
+                    usersGrid.appendChild(userCard);
+                });
+        }
+        
+        searchUsers.addEventListener("input", () => {
+            renderUsersGrid(searchUsers.value);
+        });
+        
+        // Initial render
+        renderUsersGrid();
+        
+        // ===== FEATURED MEMBER =====
+        const featAvatar = document.getElementById("featAvatar");
+        const featName = document.getElementById("featName");
+        const featDesc = document.getElementById("featDesc");
+        const featBadges = document.getElementById("featBadges");
+        
+        // Sample featured member data
+        const featuredMember = {
+            name: "Viz Founder",
+            description: "Clan Leader & Developer",
+            avatar: "https://via.placeholder.com/60",
+            badges: ["Founder", "Developer", "Admin"]
+        };
+        
+        featAvatar.src = featuredMember.avatar;
+        featName.textContent = featuredMember.name;
+        featDesc.textContent = featuredMember.description;
+        
+        featuredMember.badges.forEach(badge => {
+            const badgeEl = document.createElement("div");
+            badgeEl.className = "badge";
+            badgeEl.textContent = badge;
+            featBadges.appendChild(badgeEl);
+        });
+        
+        // ===== TICKER ANIMATION =====
+        const marquee = document.getElementById("marquee");
+        const marqueeContent = marquee.innerHTML;
+        
+        // Duplicate content for seamless animation
+        marquee.innerHTML = marqueeContent + marqueeContent;
+    </script>
+</body>
+</html>
