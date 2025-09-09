@@ -1109,11 +1109,18 @@
     <!-- ===== SCRIPTS ===== -->
     <script>
         // ===== DOMAIN PROTECTION =====
-        const allowedDomains = ['viz-network.com', 'localhost', '127.0.0.1'];
+        // Fixed domain protection logic
+        const allowedDomains = ['viznetwork.org', 'localhost', '127.0.0.1'];
         const currentDomain = window.location.hostname;
         
-        if (!allowedDomains.some(domain => currentDomain.includes(domain))) {
+        // Check if current domain is in the allowed list
+        const isAllowedDomain = allowedDomains.some(domain => 
+            currentDomain === domain || currentDomain.endsWith('.' + domain)
+        );
+        
+        if (!isAllowedDomain) {
             document.getElementById('domainProtection').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
             throw new Error('Domain not allowed');
         }
         
