@@ -148,6 +148,9 @@
         .island.open {
             min-width: min(92vw,980px);
             height: 72px;
+            border-radius: 24px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 0 0 2px rgba(100,160,255,.15), 0 12px 40px rgba(15,70,139,.45), inset 0 0 18px rgba(15,70,139,.28);
         }
         
         .camera {
@@ -159,6 +162,11 @@
             background: radial-gradient(closest-side, #18243b 70%, #0b1628 71%),
                         radial-gradient(circle at 70% 35%, rgba(255,255,255,.25) 0 18%, transparent 19% 100%);
             box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), 0 2px 12px rgba(0,0,0,.55);
+            transition: transform 0.3s ease;
+        }
+        
+        .island.open .camera {
+            transform: scale(0.9);
         }
         
         .camera::after {
@@ -178,6 +186,11 @@
             color: var(--muted);
             letter-spacing: .2px;
             white-space: nowrap;
+            transition: opacity 0.3s ease;
+        }
+        
+        .island.open .pill-label {
+            opacity: 0.7;
         }
         
         .island-actions {
@@ -784,17 +797,28 @@
             color: var(--text);
         }
         
+        /* Fix for directory modal text color */
+        #directory, #directory h3, #directory input, #directory input::placeholder {
+            color: var(--text) !important;
+        }
+        
         /* Discord link style for How to Join section */
         .discord-link {
             color: var(--viz-300);
             font-weight: 700;
             text-decoration: none;
-            transition: color var(--speed) ease;
+            transition: all var(--speed) ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(100, 160, 255, 0.1);
+            border: 1px solid rgba(100, 160, 255, 0.2);
         }
         
         .discord-link:hover {
             color: #64a0ff;
-            text-decoration: underline;
+            background: rgba(100, 160, 255, 0.15);
+            box-shadow: 0 0 10px rgba(100, 160, 255, 0.2);
+            text-decoration: none;
         }
         
         /* ===== MEDIA QUERIES ===== */
@@ -1022,512 +1046,314 @@
         <!-- JOIN SECTION -->
         <section class="card" id="join">
             <h2>How to Join</h2>
+            <p>Follow these steps to become a member:</p>
             <ol>
-                <li>Use the tag <b>[Viz]</b> in your RecRoom, and Discord name.</li>
-                <li>Join the <a class="discord-link" href="https://discord.gg/KvpxU6wfGa" target="_blank">Discord Server</a>.</li>
-                <li> Join the Discord, and the RecRoom group to get crash guns. </li>
+                <li>Join the Discord server using the link below</li>
+                <li>Read the rules and guidelines</li>
+                <li>Introduce yourself in the #introductions channel</li>
+                <li>Request the Member role</li>
+                <li>Start participating in events and discussions</li>
             </ol>
+            <!-- Improved Discord button -->
+            <a class="discord-btn" href="https://discord.gg/KvpxU6wfGa" target="_blank">
+                <i class="fa-brands fa-discord"></i> Join Our Discord
+            </a>
         </section>
+        
+        <!-- MEMBER DIRECTORY MODAL -->
+        <dialog class="card" id="directory">
+            <h2>Member Directory</h2>
+            <p>Browse and connect with other members.</p>
+            <input type="text" id="searchUsers" placeholder="Search members...">
+            <div id="usersGrid"></div>
+            <br>
+            <button class="cta" onclick="document.querySelector('#directory').close()">
+                <i class="fa-solid fa-xmark"></i> Close
+            </button>
+        </dialog>
     </main>
+    
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <p>© 2025 [Viz] Network. All rights reserved.</p>
+    </footer>
     
     <!-- ===== MUSIC PLAYER ===== -->
     <div class="music-player" id="musicPlayer">
+        <div class="music-mini-player">
+            <i class="fa-solid fa-music"></i>
+        </div>
         <div class="music-player-content">
             <div class="music-header">
-                <strong>Now Playing</strong>
-                <button class="icon-btn" id="toggleMusicPlayer" title="Collapse">
-                    <i class="fa-solid fa-chevron-down"></i>
+                <h3 style="margin:0">Now Playing</h3>
+                <button class="icon-btn" onclick="toggleMusicPlayer()">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            
             <div class="music-info">
                 <div class="music-album">
                     <i class="fa-solid fa-music"></i>
                 </div>
                 <div class="music-details">
-                    <div class="music-title" id="currentSongTitle">Viz Network Theme</div>
-                    <div class="music-artist" id="currentSongInfo">Viz Collective</div>
+                    <p class="music-title">Viz Network Anthem</p>
+                    <p class="music-artist">Viz Community</p>
                 </div>
             </div>
-            
-            <div class="music-progress" id="progressBar">
-                <div class="music-progress-bar" id="progressFill"></div>
-            </div>
-            
             <div class="music-controls">
-                <button class="music-toggle" id="playPauseBtn">
-                    <i class="fa-solid fa-play"></i>
+                <button class="music-toggle" onclick="togglePlay()">
+                    <i class="fa-solid fa-play" id="playIcon"></i>
                 </button>
-                <div style="flex:1">
-                    <div class="music-title">Viz Network Theme</div>
-                    <div class="music-artist">
-                        Viz Collective • <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+                <div class="music-progress" onclick="seek(event)">
+                    <div class="music-progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            <div class="volume-control">
+                <i class="fa-solid fa-volume-high"></i>
+                <input type="range" class="volume-slider" min="0" max="100" value="70" oninput="changeVolume(this.value)">
+            </div>
+            <div class="playlist">
+                <div class="playlist-item active">
+                    <div class="playlist-item-album">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div class="playlist-item-info">
+                        <p class="playlist-item-title">Viz Network Anthem</p>
+                        <p class="playlist-item-artist">Viz Community</p>
                     </div>
                 </div>
-                <button class="icon-btn" id="volumeBtn" title="Volume">
-                    <i class="fa-solid fa-volume-high"></i>
-                </button>
-            </div>
-            
-            <div class="volume-control" id="volumeControl" style="display:none">
-                <i class="fa-solid fa-volume-low" style="color:var(--muted)"></i>
-                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
-                <i class="fa-solid fa-volume-high" style="color:var(--muted)"></i>
-            </div>
-            
-            <div class="playlist" id="playlist"></div>
-        </div>
-        
-        <!-- Mini player view (shown when collapsed) -->
-        <div class="music-mini-player">
-            <i class="fa-solid fa-music"></i>
-        </div>
-    </div>
-
-    <!-- Hidden YouTube Player -->
-    <div id="ytPlayer"></div>
-    
-    <!-- ===== AUTH MODAL ===== -->
-    <dialog id="auth" style="border:none;padding:0;background:transparent">
-        <form method="dialog" style="background:rgba(9,14,25,.9);border:1px solid var(--edge);border-radius:16px;padding:18px;width:min(92vw,420px;color:var(--text)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <h3 style="margin:0">Login</h3>
-                <button class="icon-btn" style="width:36px;height:36px" aria-label="Close" onclick="document.getElementById('auth').close()">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <label>Email<br>
-                <input type="email" required style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--edge;background:#0b1424;color:#fff">
-            </label>
-            <br><br>
-            
-            <label>Password<br>
-                <input type="password" required minlength="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--edge);background:#0b1424;color:#fff">
-            </label>
-            <br><br>
-            
-            <button class="cta" style="width:100%;justify-content:center">Sign In</button>
-            <p style="color:var(--muted);font-size:.9rem;margin:12px 0 0">[Not Working]</p>
-        </form>
-    </dialog>
-    
-    <!-- ===== DIRECTORY MODAL ===== -->
-    <dialog id="directory" style="border:none;padding:0;background:transparent">
-        <div style="background:rgba(9,14,25,.92);border:1px solid var(--edge);border-radius:16px;width:min(96vw,840px);padding:16px">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">
-                <h3 style="margin:0">Clan Members</h3>
-                <div style="display:flex;gap:8px;align-items:center">
-                    <input id="searchUsers" placeholder="Search members..." style="padding:10px 14px;border-radius:12px;border:1px solid var(--edge);background:rgba(11, 20, 36, 0.8);color:var(--text);min-width:220px;font-family:Inter,sans-serif">
-                    <button class="icon-btn" onclick="document.getElementById('directory').close()" aria-label="Close">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                <div class="playlist-item">
+                    <div class="playlist-item-album">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div class="playlist-item-info">
+                        <p class="playlist-item-title">Raid Theme</p>
+                        <p class="playlist-item-artist">Viz Sound Team</p>
+                    </div>
+                </div>
+                <div class="playlist-item">
+                    <div class="playlist-item-album">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <div class="playlist-item-info">
+                        <p class="playlist-item-title">Victory Sound</p>
+                        <p class="playlist-item-artist">Viz Sound Team</p>
+                    </div>
                 </div>
             </div>
-            
-            <div id="usersGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-height:60vh;overflow-y:auto;padding:10px 5px"></div>
         </div>
-    </dialog>
+    </div>
     
-    <!-- ===== FOOTER ===== -->
-    <footer>  © 2024 - 2025 Viz-Network - viznetwork.org - All rights reserved. </footer>
-    
-    <!-- Load YouTube IFrame API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-    
-    <!-- ===== JAVASCRIPT ===== -->
+    <!-- ===== SCRIPTS ===== -->
     <script>
         // ===== DOMAIN PROTECTION =====
-        // Fixed domain protection logic
-        const allowedDomains = ['viznetwork.org', 'localhost', '127.0.0.1'];
+        const allowedDomains = ['viz-network.com', 'localhost', '127.0.0.1'];
         const currentDomain = window.location.hostname;
         
-        // Check if current domain is in the allowed list
-        const isAllowedDomain = allowedDomains.some(domain => 
-            currentDomain === domain || currentDomain.endsWith('.' + domain)
-        );
-        
-        if (!isAllowedDomain) {
+        if (!allowedDomains.some(domain => currentDomain.includes(domain))) {
             document.getElementById('domainProtection').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
             throw new Error('Domain not allowed');
         }
         
         // ===== PARTICLE NETWORK =====
-        const canvas = document.getElementById("particle-network");
-        const ctx = canvas.getContext("2d");
+        const canvas = document.getElementById('particle-network');
+        const ctx = canvas.getContext('2d');
         let particles = [];
-        let mouse = { x: null, y: null, radius: 80 };
         
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-        }
-        
-        window.addEventListener("resize", () => {
-            resizeCanvas();
             initParticles();
-        });
-        
-        window.addEventListener("mousemove", (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-        
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 1.5 + 0.5;
-                this.speedX = Math.random() * 1 - 0.5;
-                this.speedY = Math.random() * 1 - 0.5;
-                this.color = `rgba(${Math.random() * 70 + 15}, ${Math.random() * 70 + 70}, ${Math.random() * 255}, ${Math.random() * 0.3 + 0.1})`;
-            }
-            
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                
-                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
-                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
-                
-                // Mouse interaction
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < mouse.radius) {
-                    this.speedX = dx * 0.02;
-                    this.speedY = dy * 0.02;
-                }
-            }
-            
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
         }
         
         function initParticles() {
             particles = [];
-            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
+            const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
             
             for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    speedX: (Math.random() - 0.5) * 0.5,
+                    speedY: (Math.random() - 0.5) * 0.5,
+                    color: `rgba(100, 160, 255, ${Math.random() * 0.3 + 0.1})`
+                });
             }
         }
         
-        function animateParticles() {
+        function drawParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
+                const p = particles[i];
                 
-                // Connect particles
-                for (let j = i; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                
+                p.x += p.speedX;
+                p.y += p.speedY;
+                
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+                
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
                     if (distance < 100) {
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.2 - distance/500})`;
+                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.1 * (1 - distance / 100)})`;
                         ctx.lineWidth = 0.5;
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
                         ctx.stroke();
                     }
                 }
             }
             
-            requestAnimationFrame(animateParticles);
+            requestAnimationFrame(drawParticles);
         }
         
         resizeCanvas();
-        initParticles();
-        animateParticles();
+        window.addEventListener('resize', resizeCanvas);
+        drawParticles();
         
         // ===== DYNAMIC ISLAND =====
-        const island = document.getElementById("island");
-        const drawer = document.getElementById("drawer");
-        const toggleIsland = document.getElementById("toggleIsland");
+        const island = document.getElementById('island');
+        const drawer = document.getElementById('drawer');
+        const toggleBtn = document.getElementById('toggleIsland');
         
-        toggleIsland.addEventListener("click", (e) => {
+        toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            island.classList.toggle("open");
+            island.classList.toggle('open');
         });
         
-        document.addEventListener("click", (e) => {
-            if (!island.contains(e.target) && !drawer.contains(e.target)) {
-                island.classList.remove("open");
+        document.addEventListener('click', function(e) {
+            if (!island.contains(e.target) && island.classList.contains('open')) {
+                island.classList.remove('open');
             }
         });
         
-        // ===== TOOLTIPS =====
-        const tooltip = document.getElementById("tooltip");
-        const tooltipElements = document.querySelectorAll("[title]");
+        // ===== TOOLTIP =====
+        const tooltip = document.getElementById('tooltip');
+        const elementsWithTooltip = document.querySelectorAll('[title]');
         
-        tooltipElements.forEach(el => {
-            el.addEventListener("mouseenter", (e) => {
-                const rect = el.getBoundingClientRect();
-                tooltip.textContent = el.getAttribute("title");
-                tooltip.style.left = rect.left + rect.width/2 - tooltip.offsetWidth/2 + "px";
-                tooltip.style.top = rect.top - 40 + "px";
-                tooltip.style.opacity = "1";
+        elementsWithTooltip.forEach(el => {
+            el.addEventListener('mouseenter', function(e) {
+                const rect = this.getBoundingClientRect();
+                tooltip.textContent = this.getAttribute('title');
+                tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
+                tooltip.style.top = rect.bottom + 5 + 'px';
+                tooltip.style.opacity = '1';
             });
             
-            el.addEventListener("mouseleave", () => {
-                tooltip.style.opacity = "0";
+            el.addEventListener('mouseleave', function() {
+                tooltip.style.opacity = '0';
             });
         });
-        
-        // ===== AUTH MODAL =====
-        const loginBtn = document.getElementById("loginBtn");
-        const authModal = document.getElementById("auth");
-        
-        loginBtn.addEventListener("click", () => {
-            authModal.showModal();
-        });
-        
-        // ===== MUSIC PLAYER =====
-        const musicPlayer = document.getElementById("musicPlayer");
-        const toggleMusicPlayer = document.getElementById("toggleMusicPlayer");
-        const playPauseBtn = document.getElementById("playPauseBtn");
-        const volumeBtn = document.getElementById("volumeBtn");
-        const volumeControl = document.getElementById("volumeControl");
-        const volumeSlider = document.getElementById("volumeSlider");
-        const progressBar = document.getElementById("progressBar");
-        const progressFill = document.getElementById("progressFill");
-        const currentTimeEl = document.getElementById("currentTime");
-        const totalTimeEl = document.getElementById("totalTime");
-        const currentSongTitle = document.getElementById("currentSongTitle");
-        const currentSongInfo = document.getElementById("currentSongInfo");
-        const playlistEl = document.getElementById("playlist");
-        
-        let player;
-        let isPlaying = false;
-        let currentSongIndex = 0;
-        let updateTimer;
-        
-        const playlist = [
-            {
-                title: "Viz Network Theme",
-                artist: "Viz Collective",
-                videoId: "tBfWb5IrbOI" // Updated YouTube video ID
-            }
-        ];
-        
-        // Toggle music player expanded/collapsed state
-        musicPlayer.addEventListener("click", (e) => {
-            // Only toggle if clicking on the player itself, not on child elements
-            if (e.target === musicPlayer) {
-                musicPlayer.classList.toggle("expanded");
-            }
-        });
-        
-        toggleMusicPlayer.addEventListener("click", (e) => {
-            e.stopPropagation();
-            musicPlayer.classList.remove("expanded");
-        });
-        
-        // Toggle volume control
-        volumeBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            volumeControl.style.display = volumeControl.style.display === "none" ? "flex" : "none";
-        });
-        
-        // Play/Pause button
-        playPauseBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            if (isPlaying) {
-                player.pauseVideo();
-            } else {
-                player.playVideo();
-            }
-        });
-        
-        // Volume slider
-        volumeSlider.addEventListener("input", () => {
-            player.setVolume(volumeSlider.value * 100);
-        });
-        
-        // Progress bar click to seek
-        progressBar.addEventListener("click", (e) => {
-            const rect = progressBar.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            player.seekTo(player.getDuration() * percent);
-        });
-        
-        // Initialize YouTube player
-        function onYouTubeIframeAPIReady() {
-            player = new YT.Player("ytPlayer", {
-                height: "0",
-                width: "0",
-                videoId: playlist[currentSongIndex].videoId,
-                playerVars: {
-                    playsinline: 1,
-                    modestbranding: 1,
-                    controls: 0
-                },
-                events: {
-                    onReady: onPlayerReady,
-                    onStateChange: onPlayerStateChange
-                }
-            });
-        }
-        
-        function onPlayerReady(event) {
-            // Set initial volume
-            player.setVolume(volumeSlider.value * 100);
-            
-            // Set total time
-            const duration = player.getDuration();
-            totalTimeEl.textContent = formatTime(duration);
-            
-            // Create playlist items
-            playlist.forEach((song, index) => {
-                const item = document.createElement("div");
-                item.className = "playlist-item";
-                if (index === currentSongIndex) item.classList.add("active");
-                
-                item.innerHTML = `
-                    <div class="playlist-item-album">
-                        <i class="fa-solid fa-music"></i>
-                    </div>
-                    <div class="playlist-item-info">
-                        <div class="playlist-item-title">${song.title}</div>
-                        <div class="playlist-item-artist">${song.artist}</div>
-                    </div>
-                `;
-                
-                item.addEventListener("click", () => {
-                    if (index !== currentSongIndex) {
-                        currentSongIndex = index;
-                        player.loadVideoById(playlist[currentSongIndex].videoId);
-                        updatePlaylistUI();
-                    }
-                });
-                
-                playlistEl.appendChild(item);
-            });
-        }
-        
-        function onPlayerStateChange(event) {
-            if (event.data == YT.PlayerState.PLAYING) {
-                isPlaying = true;
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
-                updateTimer = setInterval(updateProgress, 1000);
-            } else {
-                isPlaying = false;
-                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
-                clearInterval(updateTimer);
-            }
-        }
-        
-        function updateProgress() {
-            if (player && player.getCurrentTime) {
-                const currentTime = player.getCurrentTime();
-                const duration = player.getDuration();
-                
-                currentTimeEl.textContent = formatTime(currentTime);
-                progressFill.style.width = `${(currentTime / duration) * 100}%`;
-            }
-        }
-        
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-        
-        function updatePlaylistUI() {
-            const playlistItems = playlistEl.querySelectorAll(".playlist-item");
-            playlistItems.forEach((item, index) => {
-                if (index === currentSongIndex) {
-                    item.classList.add("active");
-                } else {
-                    item.classList.remove("active");
-                }
-            });
-            
-            const currentSong = playlist[currentSongIndex];
-            currentSongTitle.textContent = currentSong.title;
-            currentSongInfo.textContent = currentSong.artist;
-        }
         
         // ===== MEMBER DIRECTORY =====
-        const usersGrid = document.getElementById("usersGrid");
-        const searchUsers = document.getElementById("searchUsers");
+        const usersGrid = document.getElementById('usersGrid');
+        const searchInput = document.getElementById('searchUsers');
         
         // Sample user data
         const users = [
-            { name: "Viz Admin", role: "Administrator", avatar: "https://via.placeholder.com/60" },
-            { name: "Viz Developer", role: "Developer", avatar: "https://via.placeholder.com/60" },
-            { name: "Viz Moderator", role: "Moderator", avatar: "https://via.placeholder.com/60" },
-            { name: "Viz Member", role: "Member", avatar: "https://via.placeholder.com/60" },
-            { name: "Viz Recruiter", role: "Recruiter", avatar: "https://via.placeholder.com/60" },
-            { name: "Viz Designer", role: "Designer", avatar: "https://via.placeholder.com/60" }
+            { name: 'Viz Admin', role: 'Administrator', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Raid Leader', role: 'Moderator', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Tool Dev', role: 'Developer', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Intel Agent', role: 'Member', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Event Planner', role: 'Member', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Rec Scout', role: 'Member', avatar: 'https://via.placeholder.com/40' },
+            { name: 'New Recruit', role: 'Member', avatar: 'https://via.placeholder.com/40' },
+            { name: 'Content Creator', role: 'Member', avatar: 'https://via.placeholder.com/40' },
         ];
         
-        function renderUsersGrid(filter = "") {
-            usersGrid.innerHTML = "";
-            
-            users
-                .filter(user => user.name.toLowerCase().includes(filter.toLowerCase()))
-                .forEach(user => {
-                    const userCard = document.createElement("div");
-                    userCard.className = "user-card";
-                    userCard.innerHTML = `
-                        <img src="${user.avatar}" alt="${user.name}">
-                        <div class="user-info">
-                            <div class="user-name">${user.name}</div>
-                            <div class="user-role">${user.role}</div>
-                        </div>
-                    `;
-                    usersGrid.appendChild(userCard);
-                });
+        function renderUsers(usersToRender) {
+            usersGrid.innerHTML = '';
+            usersToRender.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                userCard.innerHTML = `
+                    <img src="${user.avatar}" alt="${user.name}">
+                    <div class="user-info">
+                        <p class="user-name">${user.name}</p>
+                        <p class="user-role">${user.role}</p>
+                    </div>
+                `;
+                usersGrid.appendChild(userCard);
+            });
         }
         
-        searchUsers.addEventListener("input", () => {
-            renderUsersGrid(searchUsers.value);
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const filteredUsers = users.filter(user => 
+                user.name.toLowerCase().includes(searchTerm) || 
+                user.role.toLowerCase().includes(searchTerm)
+            );
+            renderUsers(filteredUsers);
         });
         
         // Initial render
-        renderUsersGrid();
+        renderUsers(users);
         
         // ===== FEATURED MEMBER =====
-        const featAvatar = document.getElementById("featAvatar");
-        const featName = document.getElementById("featName");
-        const featDesc = document.getElementById("featDesc");
-        const featBadges = document.getElementById("featBadges");
-        
-        // Sample featured member data
         const featuredMember = {
-            name: "Viz Founder",
-            description: "Clan Leader & Developer",
-            avatar: "https://via.placeholder.com/60",
-            badges: ["Founder", "Developer", "Admin"]
+            name: 'Viz Founder',
+            desc: 'Leading the community since 2024',
+            badges: ['Founder', 'Developer', 'Admin']
         };
         
-        featAvatar.src = featuredMember.avatar;
-        featName.textContent = featuredMember.name;
-        featDesc.textContent = featuredMember.description;
+        document.getElementById('featName').textContent = featuredMember.name;
+        document.getElementById('featDesc').textContent = featuredMember.desc;
         
+        const badgesContainer = document.getElementById('featBadges');
         featuredMember.badges.forEach(badge => {
-            const badgeEl = document.createElement("div");
-            badgeEl.className = "badge";
+            const badgeEl = document.createElement('div');
+            badgeEl.className = 'badge';
             badgeEl.textContent = badge;
-            featBadges.appendChild(badgeEl);
+            badgesContainer.appendChild(badgeEl);
         });
         
-        // ===== TICKER ANIMATION =====
-        const marquee = document.getElementById("marquee");
-        const marqueeContent = marquee.innerHTML;
+        // ===== MUSIC PLAYER =====
+        const musicPlayer = document.getElementById('musicPlayer');
+        const playIcon = document.getElementById('playIcon');
+        const progressBar = document.getElementById('progressBar');
+        let isPlaying = false;
         
-        // Duplicate content for seamless animation
+        function toggleMusicPlayer() {
+            musicPlayer.classList.toggle('expanded');
+        }
+        
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            playIcon.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+        }
+        
+        function changeVolume(value) {
+            // Volume change logic
+        }
+        
+        function seek(event) {
+            const progressBar = event.currentTarget;
+            const clickPosition = event.offsetX;
+            const totalWidth = progressBar.offsetWidth;
+            const percentage = (clickPosition / totalWidth) * 100;
+            progressBar.style.width = percentage + '%';
+        }
+        
+        musicPlayer.addEventListener('click', function(e) {
+            if (!musicPlayer.classList.contains('expanded')) {
+                toggleMusicPlayer();
+            }
+        });
+        
+        // ===== TICKER =====
+        const marquee = document.getElementById('marquee');
+        const marqueeContent = marquee.innerHTML;
         marquee.innerHTML = marqueeContent + marqueeContent;
     </script>
 </body>
