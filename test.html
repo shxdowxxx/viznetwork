@@ -1146,195 +1146,254 @@
     <!-- ===== SCRIPTS ===== -->
     <script>
         // ===== DOMAIN PROTECTION =====
-        const allowedDomains = ['viz-network.com', 'localhost', '127.0.0.1'];
+        // Fixed domain protection logic
+        const allowedDomains = ['viznetwork.org', 'localhost', '127.0.0.1'];
         const currentDomain = window.location.hostname;
         
-        if (!allowedDomains.some(domain => currentDomain.includes(domain))) {
+        // Check if current domain is in the allowed list
+        const isAllowedDomain = allowedDomains.some(domain => 
+            currentDomain === domain || currentDomain.endsWith('.' + domain)
+        );
+        
+        if (!isAllowedDomain) {
             document.getElementById('domainProtection').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
             throw new Error('Domain not allowed');
         }
         
         // ===== PARTICLE NETWORK =====
-        const canvas = document.getElementById('particle-network');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById("particle-network");
+        const ctx = canvas.getContext("2d");
         let particles = [];
+        let mouse = { x: null, y: null, radius: 80 };
         
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener("resize", () => {
+            resizeCanvas();
             initParticles();
+        });
+        
+        window.addEventListener("mousemove", (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+        
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = `rgba(${Math.random() * 70 + 15}, ${Math.random() * 70 + 70}, ${Math.random() * 255}, ${Math.random() * 0.3 + 0.1})`;
+            }
+            
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+                
+                // Mouse interaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    this.speedX = dx * 0.02;
+                    this.speedY = dy * 0.02;
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
         
         function initParticles() {
             particles = [];
-            const particleCount = Math.floor((canvas.width * canvas.height) / 15000);
+            const particleCount = Math.floor((canvas.width * canvas.height) / 9000);
             
             for (let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 2 + 0.5,
-                    speedX: (Math.random() - 0.5) * 0.5,
-                    speedY: (Math.random() - 0.5) * 0.5,
-                    color: `rgba(100, 160, 255, ${Math.random() * 0.3 + 0.1})`
-                });
+                particles.push(new Particle());
             }
         }
         
-        function drawParticles() {
+        function animateParticles() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             for (let i = 0; i < particles.length; i++) {
-                const p = particles[i];
+                particles[i].update();
+                particles[i].draw();
                 
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                
-                p.x += p.speedX;
-                p.y += p.speedY;
-                
-                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
-                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
-                
-                for (let j = i + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dx = p.x - p2.x;
-                    const dy = p.y - p2.y;
+                // Connect particles
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
                     if (distance < 100) {
                         ctx.beginPath();
-                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.1 * (1 - distance / 100)})`;
+                        ctx.strokeStyle = `rgba(100, 160, 255, ${0.2 - distance/500})`;
                         ctx.lineWidth = 0.5;
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
                         ctx.stroke();
                     }
                 }
             }
             
-            requestAnimationFrame(drawParticles);
+            requestAnimationFrame(animateParticles);
         }
         
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        drawParticles();
+        initParticles();
+        animateParticles();
         
         // ===== DYNAMIC ISLAND =====
-        const island = document.getElementById('island');
-        const drawer = document.getElementById('drawer');
-        const toggleBtn = document.getElementById('toggleIsland');
+        const island = document.getElementById("island");
+        const drawer = document.getElementById("drawer");
+        const toggleIsland = document.getElementById("toggleIsland");
         
-        toggleBtn.addEventListener('click', function(e) {
+        toggleIsland.addEventListener("click", (e) => {
             e.stopPropagation();
-            island.classList.toggle('open');
+            island.classList.toggle("open");
         });
         
-        document.addEventListener('click', function(e) {
-            if (!island.contains(e.target) && island.classList.contains('open')) {
-                island.classList.remove('open');
+        document.addEventListener("click", (e) => {
+            if (!island.contains(e.target) && !drawer.contains(e.target)) {
+                island.classList.remove("open");
             }
         });
         
-        // ===== TOOLTIP =====
-        const tooltip = document.getElementById('tooltip');
-        const elementsWithTooltip = document.querySelectorAll('[title]');
+        // ===== TOOLTIPS =====
+        const tooltip = document.getElementById("tooltip");
+        const tooltipElements = document.querySelectorAll("[title]");
         
-        elementsWithTooltip.forEach(el => {
-            el.addEventListener('mouseenter', function(e) {
-                const rect = this.getBoundingClientRect();
-                tooltip.textContent = this.getAttribute('title');
-                tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
-                tooltip.style.top = rect.bottom + 5 + 'px';
-                tooltip.style.opacity = '1';
+        tooltipElements.forEach(el => {
+            el.addEventListener("mouseenter", (e) => {
+                const rect = el.getBoundingClientRect();
+                tooltip.textContent = el.getAttribute("title");
+                tooltip.style.left = rect.left + rect.width/2 - tooltip.offsetWidth/2 + "px";
+                tooltip.style.top = rect.top - 40 + "px";
+                tooltip.style.opacity = "1";
             });
             
-            el.addEventListener('mouseleave', function() {
-                tooltip.style.opacity = '0';
+            el.addEventListener("mouseleave", () => {
+                tooltip.style.opacity = "0";
             });
+        });
+        
+        // ===== AUTH MODAL =====
+        const loginBtn = document.getElementById("loginBtn");
+        const authModal = document.getElementById("auth");
+        
+        loginBtn.addEventListener("click", () => {
+            authModal.showModal();
         });
         
         // ===== MEMBER DIRECTORY =====
-        const usersGrid = document.getElementById('usersGrid');
-        const searchInput = document.getElementById('searchUsers');
+        const usersGrid = document.getElementById("usersGrid");
+        const searchUsers = document.getElementById("searchUsers");
         
         // Sample user data
         const users = [
-            { name: 'Viz Admin', role: 'Administrator', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Raid Leader', role: 'Moderator', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Tool Dev', role: 'Developer', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Intel Agent', role: 'Member', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Event Planner', role: 'Member', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Rec Scout', role: 'Member', avatar: 'https://via.placeholder.com/40' },
-            { name: 'New Recruit', role: 'Member', avatar: 'https://via.placeholder.com/40' },
-            { name: 'Content Creator', role: 'Member', avatar: 'https://via.placeholder.com/40' },
+            { name: "Viz Admin", role: "Administrator", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Developer", role: "Developer", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Moderator", role: "Moderator", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Member", role: "Member", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Recruiter", role: "Recruiter", avatar: "https://via.placeholder.com/60" },
+            { name: "Viz Designer", role: "Designer", avatar: "https://via.placeholder.com/60" }
         ];
         
-        function renderUsers(usersToRender) {
-            usersGrid.innerHTML = '';
-            usersToRender.forEach(user => {
-                const userCard = document.createElement('div');
-                userCard.className = 'user-card';
-                userCard.innerHTML = `
-                    <img src="${user.avatar}" alt="${user.name}">
-                    <div class="user-info">
-                        <p class="user-name">${user.name}</p>
-                        <p class="user-role">${user.role}</p>
-                    </div>
-                `;
-                usersGrid.appendChild(userCard);
-            });
+        function renderUsersGrid(filter = "") {
+            usersGrid.innerHTML = "";
+            
+            users
+                .filter(user => user.name.toLowerCase().includes(filter.toLowerCase()))
+                .forEach(user => {
+                    const userCard = document.createElement("div");
+                    userCard.className = "user-card";
+                    userCard.innerHTML = `
+                        <img src="${user.avatar}" alt="${user.name}">
+                        <div class="user-info">
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-role">${user.role}</div>
+                        </div>
+                    `;
+                    usersGrid.appendChild(userCard);
+                });
         }
         
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const filteredUsers = users.filter(user => 
-                user.name.toLowerCase().includes(searchTerm) || 
-                user.role.toLowerCase().includes(searchTerm)
-            );
-            renderUsers(filteredUsers);
+        searchUsers.addEventListener("input", () => {
+            renderUsersGrid(searchUsers.value);
         });
         
         // Initial render
-        renderUsers(users);
+        renderUsersGrid();
         
         // ===== FEATURED MEMBER =====
+        const featAvatar = document.getElementById("featAvatar");
+        const featName = document.getElementById("featName");
+        const featDesc = document.getElementById("featDesc");
+        const featBadges = document.getElementById("featBadges");
+        
+        // Sample featured member data
         const featuredMember = {
-            name: 'Viz Founder',
-            desc: 'Leading the community since 2024',
-            badges: ['Founder', 'Developer', 'Admin']
+            name: "Viz Founder",
+            description: "Clan Leader & Developer",
+            avatar: "https://via.placeholder.com/60",
+            badges: ["Founder", "Developer", "Admin"]
         };
         
-        document.getElementById('featName').textContent = featuredMember.name;
-        document.getElementById('featDesc').textContent = featuredMember.desc;
+        featAvatar.src = featuredMember.avatar;
+        featName.textContent = featuredMember.name;
+        featDesc.textContent = featuredMember.description;
         
-        const badgesContainer = document.getElementById('featBadges');
         featuredMember.badges.forEach(badge => {
-            const badgeEl = document.createElement('div');
-            badgeEl.className = 'badge';
+            const badgeEl = document.createElement("div");
+            badgeEl.className = "badge";
             badgeEl.textContent = badge;
-            badgesContainer.appendChild(badgeEl);
+            featBadges.appendChild(badgeEl);
         });
         
-        // ===== MUSIC PLAYER =====
-        const musicPlayer = document.getElementById('musicPlayer');
-        const playIcon = document.getElementById('playIcon');
-        const progressBar = document.getElementById('progressBar');
-        let isPlaying = false;
+        // ===== TICKER ANIMATION =====
+        const marquee = document.getElementById("marquee");
+        const marqueeContent = marquee.innerHTML;
         
+        // Duplicate content for seamless animation
+        marquee.innerHTML = marqueeContent + marqueeContent;
+        
+        // ===== MUSIC PLAYER =====
         function toggleMusicPlayer() {
-            musicPlayer.classList.toggle('expanded');
+            const player = document.getElementById('musicPlayer');
+            player.classList.toggle('expanded');
         }
         
         function togglePlay() {
-            isPlaying = !isPlaying;
-            playIcon.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+            const playIcon = document.getElementById('playIcon');
+            const isPlaying = playIcon.classList.contains('fa-pause');
+            
+            if (isPlaying) {
+                playIcon.classList.remove('fa-pause');
+                playIcon.classList.add('fa-play');
+            } else {
+                playIcon.classList.remove('fa-play');
+                playIcon.classList.add('fa-pause');
+            }
         }
         
         function changeVolume(value) {
-            // Volume change logic
+            // Volume change logic would go here
+            console.log('Volume changed to:', value);
         }
         
         function seek(event) {
@@ -1342,19 +1401,9 @@
             const clickPosition = event.offsetX;
             const totalWidth = progressBar.offsetWidth;
             const percentage = (clickPosition / totalWidth) * 100;
-            progressBar.style.width = percentage + '%';
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
         }
-        
-        musicPlayer.addEventListener('click', function(e) {
-            if (!musicPlayer.classList.contains('expanded')) {
-                toggleMusicPlayer();
-            }
-        });
-        
-        // ===== TICKER =====
-        const marquee = document.getElementById('marquee');
-        const marqueeContent = marquee.innerHTML;
-        marquee.innerHTML = marqueeContent + marqueeContent;
     </script>
 </body>
 </html>
