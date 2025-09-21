@@ -463,6 +463,35 @@
       transform: translateY(-2px);
     }
 
+    /* ===== COMING SOON CARDS ===== */
+    .coming-soon {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--edge);
+      border-radius: var(--radius);
+      padding: 40px 20px;
+      text-align: center;
+      grid-column: 1 / -1;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .coming-soon i {
+      font-size: 48px;
+      color: var(--viz-300);
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+    .coming-soon h3 {
+      font: 700 24px/1.2 Orbitron, Inter, sans-serif;
+      color: #fff;
+      margin: 0 0 15px;
+    }
+    .coming-soon p {
+      color: var(--muted);
+      font-size: 16px;
+      margin: 0;
+      line-height: 1.5;
+    }
+
     /* ===== LOGIN MODAL ===== */
     .modal-overlay {
       position: fixed;
@@ -743,77 +772,6 @@
       color: #fff;
     }
 
-    /* ===== LEADERBOARD ===== */
-    .leaderboard-item {
-      display: flex;
-      align-items: center;
-      padding: 15px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid var(--edge);
-      border-radius: 12px;
-      margin-bottom: 10px;
-      transition: all 0.3s ease;
-    }
-
-    .leaderboard-item:hover {
-      background: rgba(255,255,255,.06);
-      transform: translateY(-2px);
-    }
-
-    .leaderboard-rank {
-      font-family: Orbitron, sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--viz-300);
-      width: 40px;
-      text-align: center;
-    }
-
-    .leaderboard-rank.top3 {
-      color: #ffd700;
-    }
-
-    .leaderboard-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--viz), var(--viz-300));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 15px;
-      font-size: 16px;
-      color: #fff;
-    }
-
-    .leaderboard-info {
-      flex: 1;
-    }
-
-    .leaderboard-username {
-      font-weight: 600;
-      color: #fff;
-      margin: 0 0 4px;
-    }
-
-    .leaderboard-level {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0;
-    }
-
-    .leaderboard-xp {
-      font-family: Orbitron, sans-serif;
-      font-weight: 700;
-      color: var(--viz-300);
-      font-size: 16px;
-    }
-
-    .leaderboard-item.current-user {
-      background: rgba(100,160,255,.1);
-      border-color: var(--viz-300);
-      box-shadow: 0 4px 15px rgba(100,160,255,.2);
-    }
 
     /* ===== FIREBASE STATUS ===== */
     .firebase-status {
@@ -909,70 +867,29 @@
 
   <!-- Game Modal -->
   <div class="modal-overlay" id="gameModal">
-    <div class="modal" style="max-width: 90vw; max-height: 90vh; width: 800px;">
-      <button class="close-modal" id="closeGameModal">&times;</button>
-      <div class="modal-header">
+    <div class="modal" id="gameModalContent" style="max-width: 90vw; max-height: 90vh; width: 800px; padding: 10px; position: relative; resize: both; overflow: auto; min-width: 400px; min-height: 300px;">
+      <div class="modal-header" style="cursor: move; user-select: none; padding: 10px; margin: -10px -10px 10px -10px; background: rgba(100,160,255,0.1); border-radius: 8px 8px 0 0;">
         <h2 class="modal-title" id="gameTitle">Game</h2>
         <p class="modal-subtitle" id="gameInstructions">Use arrow keys or mouse to play</p>
+        <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
+          <button onclick="resizeGameModal('small')" style="padding: 5px 10px; background: var(--viz-300); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Small</button>
+          <button onclick="resizeGameModal('medium')" style="padding: 5px 10px; background: var(--viz); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Medium</button>
+          <button onclick="resizeGameModal('large')" style="padding: 5px 10px; background: var(--viz-600); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Large</button>
+          <button onclick="toggleFullscreen()" style="padding: 5px 10px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Fullscreen</button>
       </div>
-      <div id="gameContainer" style="text-align: center; margin: 20px 0;">
-        <canvas id="gameCanvas" width="600" height="400" style="border: 2px solid var(--edge); border-radius: 8px; background: #000;"></canvas>
+      </div>
+      <button class="close-modal" id="closeGameModal" style="position: absolute; top: 5px; right: 5px; z-index: 1000;">&times;</button>
+      <div class="game-content" id="gameContainer" style="text-align: center; margin: 10px 0; height: 500px; background: #000; border-radius: 8px; overflow: hidden; position: relative;">
+        <canvas id="gameCanvas" width="800" height="600" style="border: none; background: #000;"></canvas>
+      </div>
         <div id="gameScore" style="margin: 15px 0; font-size: 18px; font-weight: bold; color: var(--viz-300);">Score: 0</div>
         <div id="gameControls" style="margin: 15px 0;">
           <button onclick="restartGame()" style="padding: 10px 20px; background: var(--viz); color: white; border: none; border-radius: 8px; margin: 0 10px; cursor: pointer;">Restart</button>
           <button onclick="pauseGame()" id="pauseBtn" style="padding: 10px 20px; background: var(--viz-300); color: white; border: none; border-radius: 8px; margin: 0 10px; cursor: pointer;">Pause</button>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- Stealth Apps Modal -->
-  <div class="modal-overlay" id="stealthAppsModal">
-    <div class="modal" style="max-width: 95vw; max-height: 95vh; width: 1200px;">
-      <button class="close-modal" id="closeStealthModal">&times;</button>
-      <div class="modal-header" style="background: linear-gradient(45deg, #1a1a1a, #333333); color: white;">
-        <h2 class="modal-title">Educational Apps Hub</h2>
-        <p class="modal-subtitle">Access educational and productivity tools</p>
-      </div>
-      <div style="padding: 20px; height: 80vh;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-          <button onclick="openStealthApp('tiktok')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #000, #333); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-brands fa-tiktok" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">Video Learning</div>
-            <div style="font-size: 12px; opacity: 0.8;">Educational Videos</div>
-          </button>
-          <button onclick="openStealthApp('discord')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #5865f2, #7289da); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-brands fa-discord" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">Study Groups</div>
-            <div style="font-size: 12px; opacity: 0.8;">Collaboration</div>
-          </button>
-          <button onclick="openStealthApp('duckduckgo')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #de5833, #ff6b35); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-solid fa-search" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">Research</div>
-            <div style="font-size: 12px; opacity: 0.8;">Search Engine</div>
-          </button>
-          <button onclick="openStealthApp('geforce')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #00c896, #00a86b); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-solid fa-gamepad" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">Gaming</div>
-            <div style="font-size: 12px; opacity: 0.8;">Cloud Gaming</div>
-          </button>
-          <button onclick="openStealthApp('solo')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #ff6b35, #f7931e); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-solid fa-globe" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">App Hub</div>
-            <div style="font-size: 12px; opacity: 0.8;">More Apps</div>
-          </button>
-          <button onclick="openStealthApp('custom')" class="stealth-app-btn" style="padding: 15px; background: linear-gradient(45deg, #6c5ce7, #a29bfe); color: white; border: 1px solid #555; border-radius: 8px; cursor: pointer; text-align: center;">
-            <i class="fa-solid fa-plus" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
-            <div style="font-weight: bold;">Add Site</div>
-            <div style="font-size: 12px; opacity: 0.8;">Custom URL</div>
-          </button>
-        </div>
-        <div id="stealthAppContainer" style="height: calc(100% - 120px); border: 2px solid #333; border-radius: 8px; background: #111; display: none;">
-          <iframe id="stealthAppFrame" style="width: 100%; height: 100%; border: none; border-radius: 6px;"></iframe>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
   <!-- Login Modal -->
@@ -1057,22 +974,10 @@
           <i class="fa-solid fa-user" style="margin-right: 8px;"></i>
           Profile
         </a>
-        <a href="#leaderboard" class="nav-tab" id="leaderboardTab" style="display: none;">
-          <i class="fa-solid fa-trophy" style="margin-right: 8px;"></i>
-          Leaderboard
-        </a>
         <a href="#tools" class="nav-tab">
           <i class="fa-solid fa-tools" style="margin-right: 8px;"></i>
           Tools
         </a>
-        <a href="#videos" class="nav-tab">
-          <i class="fa-solid fa-play-circle" style="margin-right: 8px;"></i>
-          Videos
-        </a>
-        <div class="nav-tab" onclick="openStealthApps()" style="background: linear-gradient(45deg, #1a1a1a, #333333); color: white;">
-          <i class="fa-solid fa-mask" style="margin-right: 8px;"></i>
-          Apps
-        </div>
         <div class="nav-tab panic-btn" onclick="panicButton()" style="background: linear-gradient(45deg, #ff4757, #ff3838); color: white;">
           <i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i>
           Panic
@@ -1110,156 +1015,17 @@
       <h2>Game Collection</h2>
       <p>Browse our collection of unblocked games. All games are free to play! <strong>No login required to play, but login to earn XP and compete on leaderboards!</strong></p>
       <div class="games-grid">
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-puzzle-piece"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Snake Game</h3>
-            <p class="game-desc">Classic snake game with modern graphics</p>
-            <button class="play-btn" onclick="openGame('snake')">Play Snake</button>
-          </div>
+        <div class="coming-soon">
+          <i class="fa-solid fa-construction"></i>
+          <h3>More Games Coming Soon</h3>
+          <p>We're working on adding more amazing games to this collection. Check back later for updates!</p>
         </div>
         <div class="game-card">
           <div class="game-thumb"><i class="fa-solid fa-gamepad"></i></div>
           <div class="game-info">
-            <h3 class="game-title">Tetris</h3>
-            <p class="game-desc">Block-stacking puzzle game</p>
-            <button class="play-btn" onclick="openGame('tetris')">Play Tetris</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-bullseye"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Aim Trainer</h3>
-            <p class="game-desc">Test your accuracy and reflexes</p>
-            <button class="play-btn" onclick="openGame('aim')">Play Aim Trainer</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-memory"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Memory Match</h3>
-            <p class="game-desc">Match pairs and test your memory</p>
-            <button class="play-btn" onclick="openGame('memory')">Play Memory</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-keyboard"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Typing Test</h3>
-            <p class="game-desc">Improve your typing speed and accuracy</p>
-            <button class="play-btn" onclick="openGame('typing')">Start Typing</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-chess"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Chess</h3>
-            <p class="game-desc">Play chess against the computer</p>
-            <button class="play-btn" onclick="openGame('chess')">Play Chess</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-dice"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">2048</h3>
-            <p class="game-desc">Slide tiles to reach 2048</p>
-            <button class="play-btn" onclick="openGame('2048')">Play 2048</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-rocket"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Space Invaders</h3>
-            <p class="game-desc">Defend Earth from alien invaders</p>
-            <button class="play-btn" onclick="openGame('space')">Play Space Invaders</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-car"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Racing Game</h3>
-            <p class="game-desc">Race through traffic and obstacles</p>
-            <button class="play-btn" onclick="openGame('racing')">Start Racing</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-basketball"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Basketball</h3>
-            <p class="game-desc">Shoot hoops and score points</p>
-            <button class="play-btn" onclick="openGame('basketball')">Play Basketball</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-car-crash"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Subway Surfers</h3>
-            <p class="game-desc">Endless runner with obstacles</p>
-            <button class="play-btn" onclick="openGame('subway')">Play Subway Surfers</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-futbol"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Soccer Physics</h3>
-            <p class="game-desc">Physics-based soccer game</p>
-            <button class="play-btn" onclick="openGame('soccer')">Play Soccer</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-gun"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Tower Defense</h3>
-            <p class="game-desc">Defend your base from enemies</p>
-            <button class="play-btn" onclick="openGame('tower')">Play Tower Defense</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-puzzle-piece"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Cut the Rope</h3>
-            <p class="game-desc">Physics puzzle with candy</p>
-            <button class="play-btn" onclick="openGame('rope')">Play Cut the Rope</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-plane"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Flappy Bird</h3>
-            <p class="game-desc">Tap to fly through pipes</p>
-            <button class="play-btn" onclick="openGame('flappy')">Play Flappy Bird</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-ghost"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Pac-Man</h3>
-            <p class="game-desc">Eat dots and avoid ghosts</p>
-            <button class="play-btn" onclick="openGame('pacman')">Play Pac-Man</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-dice-d6"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Angry Birds</h3>
-            <p class="game-desc">Launch birds to destroy structures</p>
-            <button class="play-btn" onclick="openGame('angry')">Play Angry Birds</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-running"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Temple Run</h3>
-            <p class="game-desc">Endless runner through ancient temple</p>
-            <button class="play-btn" onclick="openGame('temple')">Play Temple Run</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-apple-whole"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Fruit Ninja</h3>
-            <p class="game-desc">Slice fruits with your finger</p>
-            <button class="play-btn" onclick="openGame('fruit')">Play Fruit Ninja</button>
+            <h3 class="game-title">Truck Space 2</h3>
+            <p class="game-desc">Epic space truck adventure! Navigate through space and complete missions.</p>
+            <button class="play-btn" onclick="openGame('html5')">Play Truck Space 2</button>
           </div>
         </div>
       </div>
@@ -1269,21 +1035,10 @@
       <h2>Math Games & Tools</h2>
       <p>Interactive math games and educational tools to help you learn and practice mathematics. From basic arithmetic to advanced calculus, we have something for every level.</p>
       <div class="games-grid">
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-calculator"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Math Calculator</h3>
-            <p class="game-desc">Advanced calculator with graphing capabilities</p>
-            <a href="#" class="play-btn">Open Calculator</a>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-chart-line"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Graphing Tool</h3>
-            <p class="game-desc">Visualize mathematical functions and equations</p>
-            <a href="#" class="play-btn">Start Graphing</a>
-          </div>
+        <div class="coming-soon">
+          <i class="fa-solid fa-calculator"></i>
+          <h3>Math Tools Coming Soon</h3>
+          <p>Interactive math tools and calculators will be available here soon!</p>
         </div>
       </div>
     </section>
@@ -1292,21 +1047,10 @@
       <h2>Biology Learning Center</h2>
       <p>Explore the fascinating world of biology through interactive simulations, virtual labs, and educational games. Perfect for students and biology enthusiasts.</p>
       <div class="games-grid">
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-dna"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">DNA Simulator</h3>
-            <p class="game-desc">Interactive DNA structure and replication simulation</p>
-            <a href="#" class="play-btn">Explore DNA</a>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-microscope"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Virtual Microscope</h3>
-            <p class="game-desc">Examine cells and microorganisms in detail</p>
-            <a href="#" class="play-btn">Start Examining</a>
-          </div>
+        <div class="coming-soon">
+          <i class="fa-solid fa-dna"></i>
+          <h3>Biology Tools Coming Soon</h3>
+          <p>Interactive biology simulations and virtual labs will be available here soon!</p>
         </div>
       </div>
     </section>
@@ -1359,131 +1103,19 @@
       </div>
     </section>
 
-    <section class="card" id="leaderboard">
-      <h2>Leaderboard</h2>
-      <p>Compete with other players and climb the ranks!</p>
-      <div id="leaderboardList">
-        <div class="leaderboard-item">
-          <div class="leaderboard-rank top3">1</div>
-          <div class="leaderboard-avatar"><i class="fa-solid fa-crown"></i></div>
-          <div class="leaderboard-info">
-            <h4 class="leaderboard-username">Loading...</h4>
-            <p class="leaderboard-level">Level 0</p>
-          </div>
-          <div class="leaderboard-xp">0 XP</div>
-        </div>
-      </div>
-    </section>
 
     <section class="card" id="tools">
       <h2>Study Tools & Utilities</h2>
       <p>Helpful tools for studying and productivity. All tools work offline and are school-friendly!</p>
       <div class="games-grid">
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-calculator"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Advanced Calculator</h3>
-            <p class="game-desc">Scientific calculator with graphing capabilities</p>
-            <button class="play-btn" onclick="openCalculator()">Open Calculator</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-file-text"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Note Taker</h3>
-            <p class="game-desc">Take notes and save them locally</p>
-            <button class="play-btn" onclick="openNoteTaker()">Open Notes</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-clock"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Study Timer</h3>
-            <p class="game-desc">Pomodoro timer for focused studying</p>
-            <button class="play-btn" onclick="openStudyTimer()">Start Timer</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-palette"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Color Picker</h3>
-            <p class="game-desc">Pick colors and get hex codes</p>
-            <button class="play-btn" onclick="openColorPicker()">Open Picker</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-convert"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Unit Converter</h3>
-            <p class="game-desc">Convert between different units</p>
-            <button class="play-btn" onclick="openUnitConverter()">Open Converter</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-qrcode"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">QR Generator</h3>
-            <p class="game-desc">Generate QR codes for text/links</p>
-            <button class="play-btn" onclick="openQRGenerator()">Generate QR</button>
-          </div>
+        <div class="coming-soon">
+          <i class="fa-solid fa-tools"></i>
+          <h3>Study Tools Coming Soon</h3>
+          <p>Helpful study tools and utilities will be available here soon!</p>
         </div>
       </div>
     </section>
 
-    <section class="card" id="videos">
-      <h2>Educational Videos</h2>
-      <p>Curated educational content to help you learn. All videos are school-appropriate and educational!</p>
-      <div class="games-grid">
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-play"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Math Tutorials</h3>
-            <p class="game-desc">Learn algebra, geometry, and calculus</p>
-            <button class="play-btn" onclick="openVideoPlayer('math')">Watch Videos</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-dna"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Biology Lessons</h3>
-            <p class="game-desc">Explore cells, genetics, and ecosystems</p>
-            <button class="play-btn" onclick="openVideoPlayer('biology')">Watch Videos</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-atom"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Chemistry Basics</h3>
-            <p class="game-desc">Learn about elements and reactions</p>
-            <button class="play-btn" onclick="openVideoPlayer('chemistry')">Watch Videos</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-globe"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">History & Geography</h3>
-            <p class="game-desc">Explore world history and geography</p>
-            <button class="play-btn" onclick="openVideoPlayer('history')">Watch Videos</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-code"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Programming Basics</h3>
-            <p class="game-desc">Learn coding fundamentals</p>
-            <button class="play-btn" onclick="openVideoPlayer('programming')">Watch Videos</button>
-          </div>
-        </div>
-        <div class="game-card">
-          <div class="game-thumb"><i class="fa-solid fa-language"></i></div>
-          <div class="game-info">
-            <h3 class="game-title">Language Learning</h3>
-            <p class="game-desc">Learn new languages and grammar</p>
-            <button class="play-btn" onclick="openVideoPlayer('language')">Watch Videos</button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="card" id="about">
       <h2>About VizualNetwork</h2>
@@ -1536,7 +1168,6 @@
         // Simulate real-time updates by checking for shared data
         setInterval(() => {
           this.loadSharedLeaderboard();
-          this.updateLeaderboard();
         }, 5000); // Check every 5 seconds
       }
 
@@ -1780,50 +1411,8 @@
           window.firebase.limit(10)
         );
 
-        window.firebase.onSnapshot(leaderboardQuery, (snapshot) => {
-          this.updateLeaderboard(snapshot.docs);
-        });
       }
 
-      updateLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboardList');
-        if (!leaderboardList) return;
-
-        // Combine local users with shared leaderboard
-        const allUsers = [...this.users, ...this.sharedLeaderboard];
-        const uniqueUsers = allUsers.reduce((acc, user) => {
-          const existing = acc.find(u => u.id === user.id);
-          if (!existing || user.xp > existing.xp) {
-            acc = acc.filter(u => u.id !== user.id);
-            acc.push(user);
-          }
-          return acc;
-        }, []);
-
-        // Sort by XP and take top 10
-        const sortedUsers = uniqueUsers.sort((a, b) => b.xp - a.xp).slice(0, 10);
-
-        leaderboardList.innerHTML = sortedUsers.map((user, index) => {
-          const isCurrentUser = this.userData && user.id === this.userData.id;
-          return `
-            <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}" onclick="userSystem.showPlayerProfile('${user.id}')">
-              <div class="leaderboard-rank ${index < 3 ? 'top3' : ''}">${index + 1}</div>
-              <div class="leaderboard-avatar">
-                <i class="fa-solid ${index === 0 ? 'fa-crown' : 'fa-user'}"></i>
-              </div>
-              <div class="leaderboard-info">
-                <h4 class="leaderboard-username">${user.username} ${isCurrentUser ? '(You)' : ''}</h4>
-                <p class="leaderboard-level">Level ${user.level}</p>
-                <p class="leaderboard-bio" style="font-size: 11px; color: var(--muted); margin: 2px 0;">${user.bio || 'No bio yet'}</p>
-              </div>
-              <div class="leaderboard-xp">${user.xp} XP</div>
-              <div class="leaderboard-click-hint" style="font-size: 10px; color: var(--muted); margin-top: 4px;">
-                <i class="fa-solid fa-eye"></i> Click to view profile
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
 
       updateUserDisplay() {
         if (!this.userData) return;
@@ -2039,20 +1628,16 @@
         const userInfo = document.getElementById('userInfo');
         const usernameDisplay = document.getElementById('usernameDisplay');
         const profileTab = document.getElementById('profileTab');
-        const leaderboardTab = document.getElementById('leaderboardTab');
-
         if (this.currentUser) {
           loginBtn.style.display = 'none';
           userInfo.style.display = 'flex';
           usernameDisplay.textContent = this.currentUser.username;
           profileTab.style.display = 'flex';
-          leaderboardTab.style.display = 'flex';
           this.updateProfile();
         } else {
           loginBtn.style.display = 'flex';
           userInfo.style.display = 'none';
           profileTab.style.display = 'none';
-          leaderboardTab.style.display = 'none';
         }
       }
 
@@ -2077,24 +1662,6 @@
         });
       }
 
-      updateLeaderboard() {
-        const leaderboardList = document.getElementById('leaderboardList');
-        const sortedUsers = [...this.users].sort((a, b) => b.xp - a.xp).slice(0, 10);
-        
-        leaderboardList.innerHTML = sortedUsers.map((user, index) => `
-          <div class="leaderboard-item">
-            <div class="leaderboard-rank ${index < 3 ? 'top3' : ''}">${index + 1}</div>
-            <div class="leaderboard-avatar">
-              <i class="fa-solid ${index === 0 ? 'fa-crown' : 'fa-user'}"></i>
-            </div>
-            <div class="leaderboard-info">
-              <h4 class="leaderboard-username">${user.username}</h4>
-              <p class="leaderboard-level">Level ${user.level}</p>
-            </div>
-            <div class="leaderboard-xp">${user.xp} XP</div>
-          </div>
-        `).join('');
-      }
 
       setupEventListeners() {
         // Login modal
@@ -2435,7 +2002,6 @@
         });
 
         userSystem.saveUsers();
-        userSystem.updateLeaderboard();
       }
     }
 
@@ -2451,6 +2017,11 @@
 
     // Game configurations
     const gameConfigs = {
+      html5: {
+        title: 'Truck Space 2',
+        instructions: 'Navigate your space truck through missions and challenges. Use arrow keys or WASD to control your vehicle.',
+        xpReward: 30
+      },
       snake: {
         title: 'Snake Game',
         instructions: 'Use arrow keys to control the snake. Eat food to grow!',
@@ -2575,6 +2146,9 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       switch(gameType) {
+        case 'html5':
+          initHTML5Game(ctx, canvas);
+          break;
         case 'snake':
           initSnakeGame(ctx, canvas);
           break;
@@ -3844,6 +3418,132 @@
       document.getElementById('gameModal').classList.remove('active');
     });
 
+
+    // ===== HTML5 GAME (TRUCK SPACE 2) =====
+    
+    function initHTML5Game(ctx, canvas) {
+      // Get the game content area
+      const gameContent = document.querySelector('.game-content');
+      
+      // Clear any existing content
+      gameContent.innerHTML = '';
+      
+      // Use G+ Games bypass method - multiple proxy sources
+      const proxyUrls = [
+        'https://1v1.lol',
+        'https://www.1v1.lol',
+        'https://1v1.lol/play',
+        'https://www.1v1.lol/play',
+        'https://1v1.lol/game',
+        'https://www.1v1.lol/game'
+      ];
+      
+      let currentProxyIndex = 0;
+      
+      const tryLoadGame = () => {
+        if (currentProxyIndex >= proxyUrls.length) {
+          // All proxies failed, show fallback
+          gameContent.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; text-align: center; padding: 20px; background: linear-gradient(135deg, #0a1222, #1a2332);">
+              <h2 style="color: #64a0ff; margin-bottom: 20px;">🎮 1v1.LOL Game</h2>
+              <p style="margin-bottom: 30px; color: #8fb0d9;">Chrome is blocking the game. Try these alternatives:</p>
+              <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+                <button onclick="window.open('https://1v1.lol', '_blank')" style="padding: 12px 24px; background: var(--viz); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                  Open 1v1.LOL
+                </button>
+                <button onclick="window.open('https://www.1v1.lol', '_blank')" style="padding: 12px 24px; background: #666; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                  Alternative Link
+                </button>
+                <button onclick="start1v1Game(document.getElementById('gameCanvas'))" style="padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                  Play Custom Game
+                </button>
+              </div>
+              <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-top: 20px; max-width: 500px;">
+                <h4 style="color: #64a0ff; margin: 0 0 10px 0;">Why This Happens:</h4>
+                <ul style="text-align: left; margin: 0; padding-left: 20px; color: #8fb0d9; font-size: 14px;">
+                  <li>Chrome blocks certain game sites for security</li>
+                  <li>School/work networks often block gaming sites</li>
+                  <li>Try opening in a new tab or different browser</li>
+                  <li>Use the custom game as a working alternative</li>
+                </ul>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        const currentUrl = proxyUrls[currentProxyIndex];
+        console.log(`Trying proxy ${currentProxyIndex + 1}: ${currentUrl}`);
+        
+        gameContent.innerHTML = `
+          <div style="width: 100%; height: 100%; position: relative; background: #000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center; z-index: 1000;">
+              <div style="margin-bottom: 20px;">
+                <div style="width: 40px; height: 40px; border: 4px solid #64a0ff; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+              </div>
+              <p>Loading 1v1.LOL...</p>
+              <p style="font-size: 12px; color: #8fb0d9;">Trying source ${currentProxyIndex + 1}/${proxyUrls.length}</p>
+            </div>
+            <iframe 
+              src="${currentUrl}" 
+              style="width: 100%; height: 100%; border: none; background: #000;"
+              allowfullscreen
+              allow="autoplay; fullscreen; microphone; camera; gamepad"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+              onload="console.log('Iframe loaded successfully from ${currentUrl}')"
+              onerror="console.log('Iframe failed to load from ${currentUrl}'); setTimeout(() => { currentProxyIndex++; tryLoadGame(); }, 2000);"
+            ></iframe>
+            <div style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
+              <button onclick="window.open('${currentUrl}', '_blank')" style="padding: 8px 16px; background: rgba(0,0,0,0.7); color: white; border: 1px solid #64a0ff; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                Open in New Tab
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // If iframe doesn't load within 5 seconds, try next proxy
+        setTimeout(() => {
+          currentProxyIndex++;
+          tryLoadGame();
+        }, 5000);
+      };
+      
+      // Start trying to load the game
+      tryLoadGame();
+      
+      // Award XP when game starts
+      if (userSystem.userData) {
+        userSystem.addXP(gameConfigs.html5.xpReward, 'game');
+        userSystem.showNotification(`Game started! +${gameConfigs.html5.xpReward} XP!`, 'success');
+      } else {
+        userSystem.showNotification('Game started! Login to earn XP!', 'info');
+      }
+      
+      // Store cleanup function
+      window.cleanupHTML5Game = () => {
+        // Clean up Unity game instance
+        if (window.unityGameInstance) {
+          try {
+            window.unityGameInstance.Quit();
+          } catch (e) {
+            console.log('Unity cleanup error:', e);
+          }
+          window.unityGameInstance = null;
+        }
+        
+        // Remove Unity scripts
+        const scripts = document.querySelectorAll('script[src*="UnityProgress"], script[src*="2.7.js"]');
+        scripts.forEach(script => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        });
+        
+        // Restore original canvas
+        gameContent.innerHTML = '<canvas id="gameCanvas" width="800" height="600" style="border: none; background: #000;"></canvas>';
+      };
+    }
+
     // ===== PANIC BUTTON FUNCTION =====
     
     function panicButton() {
@@ -3854,101 +3554,84 @@
       }, 500);
     }
 
-    // ===== STEALTH APPS FUNCTIONS =====
+    // ===== GAME MODAL CONTROLS =====
     
-    function openStealthApps() {
-      document.getElementById('stealthAppsModal').classList.add('active');
-    }
-
-    function openStealthApp(appType) {
-      const container = document.getElementById('stealthAppContainer');
-      const iframe = document.getElementById('stealthAppFrame');
+    function resizeGameModal(size) {
+      const modal = document.getElementById('gameModalContent');
+      const gameContainer = document.querySelector('.game-content');
       
-      // Show the container
-      container.style.display = 'block';
-      
-      // Disguised URLs and proxy methods
-      const appUrls = {
-        'tiktok': 'https://www.tiktok.com',
-        'discord': 'https://discord.com/app',
-        'duckduckgo': 'https://duckduckgo.com',
-        'geforce': 'https://play.geforcenow.com',
-        'solo': 'https://play.szvy.win',
-        'custom': 'about:blank'
-      };
-
-      // Try different methods to bypass filters
-      const tryLoadApp = (url, method = 'direct') => {
-        try {
-          if (method === 'direct') {
-            iframe.src = url;
-          } else if (method === 'proxy') {
-            // Use a proxy service (you can replace with working proxies)
-            iframe.src = `https://cors-anywhere.herokuapp.com/${url}`;
-          } else if (method === 'redirect') {
-            // Create a redirect page
-            const redirectHtml = `
-              <html>
-                <head>
-                  <meta http-equiv="refresh" content="0; url=${url}">
-                  <title>Loading...</title>
-                </head>
-                <body style="background: #000; color: #fff; text-align: center; padding: 50px;">
-                  <h2>Loading Educational Content...</h2>
-                  <p>If this doesn't redirect automatically, <a href="${url}" target="_blank" style="color: #64a0ff;">click here</a></p>
-                </body>
-              </html>
-            `;
-            iframe.srcdoc = redirectHtml;
-          }
-        } catch (error) {
-          console.log('Method failed, trying alternative...');
-          // Fallback to new tab
-          window.open(url, '_blank');
-        }
-      };
-
-      if (appType === 'custom') {
-        const customUrl = prompt('Enter the URL you want to access:');
-        if (customUrl) {
-          tryLoadApp(customUrl);
-        }
-        return;
-      }
-
-      const url = appUrls[appType];
-      if (url) {
-        // Try direct first, then fallback methods
-        tryLoadApp(url, 'direct');
-        
-        // If iframe fails to load, try redirect method
-        iframe.onerror = () => {
-          tryLoadApp(url, 'redirect');
-        };
+      switch(size) {
+        case 'small':
+          modal.style.width = '500px';
+          modal.style.height = '400px';
+          gameContainer.style.height = '300px';
+          break;
+        case 'medium':
+          modal.style.width = '800px';
+          modal.style.height = '600px';
+          gameContainer.style.height = '500px';
+          break;
+        case 'large':
+          modal.style.width = '1000px';
+          modal.style.height = '700px';
+          gameContainer.style.height = '600px';
+          break;
       }
     }
-
-    // Close stealth apps modal
-    document.getElementById('closeStealthModal').addEventListener('click', () => {
-      document.getElementById('stealthAppsModal').classList.remove('active');
-      // Hide the iframe container
-      document.getElementById('stealthAppContainer').style.display = 'none';
-    });
-
-    // Add hover effects for stealth app buttons
-    document.addEventListener('DOMContentLoaded', () => {
-      const stealthBtns = document.querySelectorAll('.stealth-app-btn');
-      stealthBtns.forEach(btn => {
-        btn.addEventListener('mouseenter', () => {
-          btn.style.transform = 'translateY(-2px) scale(1.02)';
-          btn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
-        });
-        btn.addEventListener('mouseleave', () => {
-          btn.style.transform = 'translateY(0) scale(1)';
-          btn.style.boxShadow = 'none';
-        });
+    
+    function toggleFullscreen() {
+      const modal = document.getElementById('gameModalContent');
+      if (modal.style.position === 'fixed') {
+        // Exit fullscreen
+        modal.style.position = 'relative';
+        modal.style.top = 'auto';
+        modal.style.left = 'auto';
+        modal.style.width = '800px';
+        modal.style.height = '600px';
+        modal.style.zIndex = 'auto';
+        modal.style.margin = 'auto';
+      } else {
+        // Enter fullscreen
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.zIndex = '10000';
+        modal.style.margin = '0';
+        document.querySelector('.game-content').style.height = 'calc(100vh - 200px)';
+      }
+    }
+    
+    // Make modal draggable
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('gameModalContent');
+      const header = modal.querySelector('.modal-header');
+      
+      header.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        const rect = modal.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        modal.style.position = 'fixed';
+        modal.style.margin = '0';
+      });
+      
+      document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+          modal.style.left = (e.clientX - dragOffset.x) + 'px';
+          modal.style.top = (e.clientY - dragOffset.y) + 'px';
+        }
+      });
+      
+      document.addEventListener('mouseup', function() {
+        isDragging = false;
       });
     });
+
 
     // Particles
     const canvas = document.getElementById('particle-network');
