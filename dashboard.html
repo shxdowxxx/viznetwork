@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VizNetwork — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    /* ---- Dashboard layout ---- */
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .dash-wrap {
+      flex: 1;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .dash-inner {
+      width: 100%;
+      max-width: 640px;
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Header above sections */
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-bottom: 0.5rem;
+    }
+
+    .dash-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .dash-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.375rem;
+      letter-spacing: 0.03em;
+    }
+
+    .dash-username {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .dash-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Section cards */
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .section-body {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Textarea char counter */
+    .bio-wrap {
+      position: relative;
+    }
+
+    .bio-wrap textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .bio-counter {
+      position: absolute;
+      bottom: 0.45rem;
+      right: 0.75rem;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .bio-counter.near-limit { color: #cc5; }
+    .bio-counter.at-limit   { color: #e55; }
+
+    /* Read-only username field */
+    .username-copy-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .username-copy-row input {
+      flex: 1;
+      cursor: default;
+      color: var(--text-muted);
+    }
+
+    /* Links list */
+    .links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .link-row {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .link-icon-select {
+      width: 2.5rem;
+      padding: 0.625rem 0.25rem;
+      text-align: center;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .link-empty {
+      text-align: center;
+      padding: 1.25rem 0;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .links-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 0.25rem;
+    }
+
+    .links-count {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Accent color section */
+    .accent-preview-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .accent-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+
+    .accent-hex {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    /* Save feedback button area */
+    .save-row {
+      display: flex;
+      justify-content: flex-end;
+      padding-top: 0.25rem;
+    }
+
+    .save-btn {
+      min-width: 110px;
+    }
+
+    /* Overlay while loading initial data */
+    #dashLoader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 560px) {
+      .link-row {
+        grid-template-columns: 2.5rem 1fr auto;
+      }
+      /* Stack label + URL on mobile */
+      .link-url-input {
+        grid-column: 2 / 3;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .link-row {
+        grid-template-columns: 1fr auto;
+      }
+
+      .link-icon-select { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="/" class="nav-logo">VIZNETWORK</a>
+    <div class="nav-actions" id="navActions">
+      <!-- Populated by JS once user loads -->
+    </div>
+  </nav>
+
+  <!-- Loading state -->
+  <div id="dashLoader">Loading...</div>
+
+  <!-- Main dashboard (hidden until auth + data ready) -->
+  <div class="dash-wrap" id="dashMain" style="display:none;">
+    <div class="dash-inner">
+
+      <!-- Header -->
+      <div class="dash-header">
+        <div class="dash-header-left">
+          <span class="dash-title">Edit Profile</span>
+          <span class="dash-username font-mono" id="dashUsernameLabel"></span>
+        </div>
+        <div class="dash-header-right" id="dashHeaderRight">
+          <!-- View profile + sign out injected by JS -->
+        </div>
+      </div>
+
+      <!-- ===================== PROFILE SECTION ===================== -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Profile</span>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label class="form-label" for="avatarInput">Avatar URL</label>
+            <input type="url" id="avatarInput" placeholder="https://example.com/photo.jpg" />
+            <span class="form-hint">Paste any public image URL.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="displayNameInput">Display name</label>
+            <input type="text" id="displayNameInput" placeholder="Your Name" maxlength="40" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bioInput">Bio</label>
+            <div class="bio-wrap">
+              <textarea id="bioInput" placeholder="A short bio..." maxlength="160"></textarea>
+              <span class="bio-counter" id="bioCounter">0 / 160</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <div class="username-copy-row">
+              <input type="text" id="usernameDisplay" readonly />
+              <button class="btn btn-secondary btn-sm" id="copyUsernameBtn" title="Copy profile URL">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="save-row">
+            <button class="btn btn-primary btn-sm save-btn" id="saveProfileBtn">Save profile</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== LINKS SECTION ===================== -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Links</span>
+        </div>
+        <div class="section-body">
+          <div class="links-list" id="linksList">
+            <div class="link-empty" id="linksEmpty">No links yet. Add one below.</div>
+          </div>
+
+          <div class="links-footer">
+            <span class="links-count" id="linksCount">0 / 20</span>
+            <button class="btn btn-secondary btn-sm" id="addLinkBtn">
+              <i class="fa-solid fa-plus"></i> Add link
+            </button>
+          </div>
+
+          <div class="save-row">
+            <button class="btn btn-primary btn-sm save-btn" id="saveLinksBtn">Save links</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== APPEARANCE SECTION ===================== -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-title">Appearance</span>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label class="form-label">Accent color</label>
+            <p class="form-hint" style="margin-bottom: 0.75rem;">
+              Used as a tint on your profile page link buttons and hover states.
+            </p>
+            <div class="swatch-grid" id="swatchGrid">
+              <!-- Swatches injected by JS -->
+            </div>
+          </div>
+
+          <div class="accent-preview-row" id="accentPreviewRow">
+            <div class="accent-dot" id="accentDot"></div>
+            <span class="accent-hex" id="accentHex">#ffffff</span>
+          </div>
+
+          <div class="save-row">
+            <button class="btn btn-primary btn-sm save-btn" id="saveAppearanceBtn">Save appearance</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+    import {
+      doc, getDoc, updateDoc, query, collection, where, getDocs
+    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+    // -----------------------------------------------------------------------
+    // State
+    // -----------------------------------------------------------------------
+    let currentUser   = null;
+    let profileData   = null;
+    let currentLinks  = [];
+    let selectedColor = '#ffffff';
+    let currentUsername = '';
+
+    // -----------------------------------------------------------------------
+    // Auth guard
+    // -----------------------------------------------------------------------
+    onAuthStateChanged(auth, async user => {
+      if (!user) {
+        window.location.replace('/auth.html');
+        return;
+      }
+      currentUser = user;
+      await loadProfile(user.uid);
+    });
+
+    // -----------------------------------------------------------------------
+    // Load profile from Firestore (find by uid in profiles collection)
+    // -----------------------------------------------------------------------
+    async function loadProfile(uid) {
+      try {
+        // Query profiles where uid == currentUser.uid
+        const q = query(collection(db, 'profiles'), where('uid', '==', uid));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          // No profile found — something went wrong during signup
+          document.getElementById('dashLoader').textContent = 'Profile not found. Please sign out and create a new account.';
+          return;
+        }
+
+        const docSnap = snap.docs[0];
+        profileData = docSnap.data();
+        currentUsername = docSnap.id; // document ID is the username
+
+        renderDashboard();
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        document.getElementById('dashLoader').textContent = 'Failed to load profile. Please refresh.';
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Render dashboard once data is ready
+    // -----------------------------------------------------------------------
+    function renderDashboard() {
+      // Nav
+      const navActions = document.getElementById('navActions');
+      navActions.innerHTML = `
+        <a class="btn btn-ghost btn-sm" href="/${currentUsername}" target="_blank">
+          View profile <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem;"></i>
+        </a>
+        <button class="btn btn-secondary btn-sm" id="signOutBtn">Sign out</button>
+      `;
+      document.getElementById('signOutBtn').addEventListener('click', handleSignOut);
+
+      // Header labels
+      document.getElementById('dashUsernameLabel').textContent = `viznetwork.org/${currentUsername}`;
+
+      // Profile fields
+      document.getElementById('avatarInput').value      = profileData.avatar || '';
+      document.getElementById('displayNameInput').value = profileData.displayName || '';
+      document.getElementById('bioInput').value         = profileData.bio || '';
+      document.getElementById('usernameDisplay').value  = currentUsername;
+      updateBioCounter();
+
+      // Links
+      currentLinks = Array.isArray(profileData.links) ? [...profileData.links] : [];
+      renderLinks();
+
+      // Appearance
+      selectedColor = profileData.accentColor || '#ffffff';
+      renderSwatches();
+      updateAccentPreview();
+
+      // Show dashboard
+      document.getElementById('dashLoader').style.display = 'none';
+      document.getElementById('dashMain').style.display  = 'block';
+    }
+
+    // -----------------------------------------------------------------------
+    // Bio counter
+    // -----------------------------------------------------------------------
+    const bioInput   = document.getElementById('bioInput');
+    const bioCounter = document.getElementById('bioCounter');
+
+    function updateBioCounter() {
+      const len = bioInput.value.length;
+      bioCounter.textContent = `${len} / 160`;
+      bioCounter.className = len >= 160 ? 'bio-counter at-limit'
+                           : len >= 140 ? 'bio-counter near-limit'
+                           : 'bio-counter';
+    }
+
+    bioInput.addEventListener('input', updateBioCounter);
+
+    // -----------------------------------------------------------------------
+    // Copy username URL
+    // -----------------------------------------------------------------------
+    document.getElementById('copyUsernameBtn').addEventListener('click', () => {
+      const url = `https://viznetwork.org/${currentUsername}`;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('copyUsernameBtn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        setTimeout(() => { btn.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 1500);
+      });
+    });
+
+    // -----------------------------------------------------------------------
+    // Save profile
+    // -----------------------------------------------------------------------
+    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveProfileBtn');
+      setSaveFeedback(btn, 'saving');
+
+      const avatar      = document.getElementById('avatarInput').value.trim();
+      const displayName = document.getElementById('displayNameInput').value.trim() || currentUsername;
+      const bio         = document.getElementById('bioInput').value.slice(0, 160);
+
+      try {
+        await updateDoc(doc(db, 'profiles', currentUsername), { avatar, displayName, bio });
+        setSaveFeedback(btn, 'saved');
+      } catch (err) {
+        console.error(err);
+        setSaveFeedback(btn, 'error');
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Links management
+    // -----------------------------------------------------------------------
+    const ICON_OPTIONS = [
+      { value: 'fa-solid fa-link',         label: 'Link' },
+      { value: 'fa-brands fa-twitter',     label: 'Twitter/X' },
+      { value: 'fa-brands fa-instagram',   label: 'Instagram' },
+      { value: 'fa-brands fa-github',      label: 'GitHub' },
+      { value: 'fa-brands fa-youtube',     label: 'YouTube' },
+      { value: 'fa-brands fa-twitch',      label: 'Twitch' },
+      { value: 'fa-brands fa-tiktok',      label: 'TikTok' },
+      { value: 'fa-brands fa-discord',     label: 'Discord' },
+      { value: 'fa-brands fa-linkedin',    label: 'LinkedIn' },
+      { value: 'fa-brands fa-spotify',     label: 'Spotify' },
+      { value: 'fa-brands fa-soundcloud',  label: 'SoundCloud' },
+      { value: 'fa-solid fa-envelope',     label: 'Email' },
+      { value: 'fa-solid fa-globe',        label: 'Website' },
+      { value: 'fa-brands fa-patreon',     label: 'Patreon' },
+      { value: 'fa-brands fa-kick',        label: 'Kick' },
+    ];
+
+    function buildIconSelectHTML(selected = 'fa-solid fa-link') {
+      const opts = ICON_OPTIONS.map(o =>
+        `<option value="${o.value}" ${o.value === selected ? 'selected' : ''}>${o.label}</option>`
+      ).join('');
+      return `<select class="link-icon-select">${opts}</select>`;
+    }
+
+    function renderLinks() {
+      const list  = document.getElementById('linksList');
+      const empty = document.getElementById('linksEmpty');
+      const count = document.getElementById('linksCount');
+
+      // Clear existing rows (keep the empty placeholder)
+      list.querySelectorAll('.link-row').forEach(r => r.remove());
+
+      count.textContent = `${currentLinks.length} / 20`;
+
+      if (currentLinks.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      currentLinks.forEach((link, i) => {
+        const row = document.createElement('div');
+        row.className = 'link-row';
+        row.dataset.index = i;
+        row.innerHTML = `
+          ${buildIconSelectHTML(link.icon)}
+          <input type="text" class="link-label-input" placeholder="Label" value="${escAttr(link.label)}" maxlength="40" />
+          <input type="url"  class="link-url-input"   placeholder="https://..." value="${escAttr(link.url)}" />
+          <button class="btn btn-danger btn-sm link-delete-btn" title="Remove link">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        `;
+        list.insertBefore(row, empty);
+
+        // Delete handler
+        row.querySelector('.link-delete-btn').addEventListener('click', () => {
+          currentLinks.splice(i, 1);
+          renderLinks();
+        });
+      });
+    }
+
+    document.getElementById('addLinkBtn').addEventListener('click', () => {
+      if (currentLinks.length >= 20) return;
+      currentLinks.push({ icon: 'fa-solid fa-link', label: '', url: '' });
+      renderLinks();
+      // Focus the last label input
+      const rows = document.querySelectorAll('.link-row');
+      if (rows.length) rows[rows.length - 1].querySelector('.link-label-input')?.focus();
+    });
+
+    document.getElementById('saveLinksBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveLinksBtn');
+
+      // Read current input values from DOM
+      const rows = document.querySelectorAll('.link-row');
+      const links = [];
+      rows.forEach(row => {
+        const icon  = row.querySelector('.link-icon-select')?.value || 'fa-solid fa-link';
+        const label = row.querySelector('.link-label-input')?.value.trim() || '';
+        const url   = row.querySelector('.link-url-input')?.value.trim() || '';
+        if (url) links.push({ icon, label, url }); // only save rows with a URL
+      });
+      currentLinks = links;
+      renderLinks();
+
+      setSaveFeedback(btn, 'saving');
+      try {
+        await updateDoc(doc(db, 'profiles', currentUsername), { links: currentLinks });
+        setSaveFeedback(btn, 'saved');
+      } catch (err) {
+        console.error(err);
+        setSaveFeedback(btn, 'error');
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Appearance — accent color swatches
+    // -----------------------------------------------------------------------
+    const ACCENT_PRESETS = [
+      { hex: '#ffffff', label: 'White'  },
+      { hex: '#3b82f6', label: 'Blue'   },
+      { hex: '#22c55e', label: 'Green'  },
+      { hex: '#ef4444', label: 'Red'    },
+      { hex: '#a855f7', label: 'Purple' },
+      { hex: '#f97316', label: 'Orange' },
+      { hex: '#ec4899', label: 'Pink'   },
+      { hex: '#eab308', label: 'Yellow' },
+    ];
+
+    function renderSwatches() {
+      const grid = document.getElementById('swatchGrid');
+      grid.innerHTML = '';
+      ACCENT_PRESETS.forEach(preset => {
+        const btn = document.createElement('button');
+        btn.className = `swatch${preset.hex === selectedColor ? ' selected' : ''}`;
+        btn.style.background = preset.hex;
+        btn.title = preset.label;
+        btn.setAttribute('aria-label', `Accent color: ${preset.label}`);
+        btn.addEventListener('click', () => {
+          selectedColor = preset.hex;
+          renderSwatches();
+          updateAccentPreview();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function updateAccentPreview() {
+      document.getElementById('accentDot').style.background = selectedColor;
+      document.getElementById('accentHex').textContent = selectedColor;
+    }
+
+    document.getElementById('saveAppearanceBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveAppearanceBtn');
+      setSaveFeedback(btn, 'saving');
+      try {
+        await updateDoc(doc(db, 'profiles', currentUsername), { accentColor: selectedColor });
+        setSaveFeedback(btn, 'saved');
+      } catch (err) {
+        console.error(err);
+        setSaveFeedback(btn, 'error');
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Sign out
+    // -----------------------------------------------------------------------
+    async function handleSignOut() {
+      await signOut(auth);
+      window.location.replace('/');
+    }
+
+    // -----------------------------------------------------------------------
+    // Save button feedback helper
+    // -----------------------------------------------------------------------
+    function setSaveFeedback(btn, state) {
+      if (state === 'saving') {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+      } else if (state === 'saved') {
+        btn.textContent = 'Saved';
+        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = btn.dataset.original || 'Save';
+        }, 2000);
+      } else if (state === 'error') {
+        btn.textContent = 'Error — retry';
+        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = btn.dataset.original || 'Save';
+        }, 2500);
+      }
+    }
+
+    // Store original labels so we can restore them
+    document.querySelectorAll('.save-btn').forEach(btn => {
+      btn.dataset.original = btn.textContent.trim();
+    });
+
+    // -----------------------------------------------------------------------
+    // Utility: escape HTML attribute values
+    // -----------------------------------------------------------------------
+    function escAttr(str) {
+      return (str || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

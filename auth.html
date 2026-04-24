@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VizNetwork — Sign in</title>
+  <meta name="description" content="Sign in or create your VizNetwork profile page." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    /* ---- Auth page layout ---- */
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .auth-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+
+    .auth-logo {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 1.125rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 1.75rem;
+      display: block;
+    }
+
+    .auth-tabs {
+      margin-bottom: 1.75rem;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.125rem;
+    }
+
+    .auth-form.hidden { display: none; }
+
+    .auth-submit {
+      width: 100%;
+      margin-top: 0.25rem;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+    }
+
+    /* Username availability feedback */
+    .username-row {
+      position: relative;
+    }
+
+    .username-prefix {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .username-row input {
+      padding-left: 8.5rem; /* room for "viznetwork.org/" prefix */
+    }
+
+    .username-status {
+      font-size: 0.75rem;
+      min-height: 1rem;
+      line-height: 1.4;
+    }
+
+    .username-status.available { color: #5c5; }
+    .username-status.taken     { color: #e55; }
+    .username-status.checking  { color: var(--text-muted); }
+    .username-status.invalid   { color: #e55; }
+
+    /* Global form error banner */
+    .auth-banner {
+      padding: 0.6rem 0.875rem;
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      display: none;
+    }
+
+    .auth-banner.error {
+      background: rgba(220, 80, 80, 0.1);
+      border: 1px solid rgba(220, 80, 80, 0.25);
+      color: #e88;
+      display: block;
+    }
+
+    .auth-banner.success {
+      background: rgba(80, 200, 80, 0.1);
+      border: 1px solid rgba(80, 200, 80, 0.25);
+      color: #8e8;
+      display: block;
+    }
+
+    /* Back link */
+    .auth-back {
+      display: block;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 1.25rem;
+      transition: var(--transition);
+    }
+
+    .auth-back:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- Minimal nav -->
+  <nav class="nav">
+    <a href="/" class="nav-logo">VIZNETWORK</a>
+  </nav>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <span class="auth-logo">VIZNETWORK</span>
+
+      <!-- Sign in / Create account tabs -->
+      <div class="tabs auth-tabs">
+        <button class="tab-btn active" id="tabSignin"  data-tab="signin">Sign in</button>
+        <button class="tab-btn"        id="tabSignup"  data-tab="signup">Create account</button>
+      </div>
+
+      <!-- Error / success banner (shared) -->
+      <div class="auth-banner" id="authBanner" role="alert"></div>
+
+      <!-- ---- Sign in form ---- -->
+      <form class="auth-form" id="signinForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="siEmail">Email</label>
+          <input type="email" id="siEmail" name="email" placeholder="you@example.com" autocomplete="email" />
+          <span class="form-error" id="siEmailErr"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="siPassword">Password</label>
+          <input type="password" id="siPassword" name="password" placeholder="••••••••" autocomplete="current-password" />
+          <span class="form-error" id="siPasswordErr"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary auth-submit" id="signinBtn">
+          Sign in
+        </button>
+      </form>
+
+      <!-- ---- Create account form ---- -->
+      <form class="auth-form hidden" id="signupForm" novalidate>
+        <!-- Username input with prefix overlay -->
+        <div class="form-group">
+          <label class="form-label" for="suUsername">Username</label>
+          <div class="username-row">
+            <span class="username-prefix">viznetwork.org/</span>
+            <input
+              type="text"
+              id="suUsername"
+              name="username"
+              placeholder="yourname"
+              autocomplete="off"
+              maxlength="20"
+              spellcheck="false"
+            />
+          </div>
+          <span class="username-status" id="usernameStatus"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="suEmail">Email</label>
+          <input type="email" id="suEmail" name="email" placeholder="you@example.com" autocomplete="email" />
+          <span class="form-error" id="suEmailErr"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="suPassword">Password</label>
+          <input type="password" id="suPassword" name="password" placeholder="8+ characters" autocomplete="new-password" />
+          <span class="form-error" id="suPasswordErr"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary auth-submit" id="signupBtn">
+          Create account
+        </button>
+      </form>
+
+      <a href="/" class="auth-back">Back to home</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import {
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+    import {
+      doc, setDoc, getDoc, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+    // -----------------------------------------------------------------------
+    // Redirect if already authenticated
+    // -----------------------------------------------------------------------
+    onAuthStateChanged(auth, user => {
+      if (user) window.location.replace('/dashboard.html');
+    });
+
+    // -----------------------------------------------------------------------
+    // Parse ?claim=username from URL
+    // -----------------------------------------------------------------------
+    const claimUsername = new URLSearchParams(window.location.search).get('claim') || '';
+
+    // -----------------------------------------------------------------------
+    // Tab switching
+    // -----------------------------------------------------------------------
+    const tabSignin = document.getElementById('tabSignin');
+    const tabSignup = document.getElementById('tabSignup');
+    const signinForm = document.getElementById('signinForm');
+    const signupForm = document.getElementById('signupForm');
+    const authBanner = document.getElementById('authBanner');
+
+    function setTab(tab) {
+      clearBanner();
+      if (tab === 'signin') {
+        tabSignin.classList.add('active');
+        tabSignup.classList.remove('active');
+        signinForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+      } else {
+        tabSignup.classList.add('active');
+        tabSignin.classList.remove('active');
+        signupForm.classList.remove('hidden');
+        signinForm.classList.add('hidden');
+      }
+    }
+
+    tabSignin.addEventListener('click', () => setTab('signin'));
+    tabSignup.addEventListener('click', () => setTab('signup'));
+
+    // Pre-fill username from ?claim= param and switch to signup tab
+    if (claimUsername) {
+      setTab('signup');
+      document.getElementById('suUsername').value = claimUsername.toLowerCase();
+      // Trigger availability check after short delay (DOM needs to settle)
+      setTimeout(() => checkUsername(claimUsername.toLowerCase()), 100);
+    }
+
+    // -----------------------------------------------------------------------
+    // Banner helpers
+    // -----------------------------------------------------------------------
+    function showBanner(msg, type = 'error') {
+      authBanner.textContent = msg;
+      authBanner.className = `auth-banner ${type}`;
+    }
+
+    function clearBanner() {
+      authBanner.className = 'auth-banner';
+      authBanner.textContent = '';
+    }
+
+    // -----------------------------------------------------------------------
+    // Username validation & availability check (debounced)
+    // -----------------------------------------------------------------------
+    const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+    const usernameStatus = document.getElementById('usernameStatus');
+    const usernameInput  = document.getElementById('suUsername');
+    let usernameDebounce = null;
+    let usernameValid    = false;
+
+    function setUsernameStatus(msg, cls) {
+      usernameStatus.textContent = msg;
+      usernameStatus.className   = `username-status ${cls}`;
+    }
+
+    async function checkUsername(value) {
+      if (!value) {
+        setUsernameStatus('', '');
+        usernameValid = false;
+        return;
+      }
+      if (!USERNAME_RE.test(value)) {
+        setUsernameStatus('3–20 characters. Letters, numbers, underscores only.', 'invalid');
+        usernameValid = false;
+        return;
+      }
+      setUsernameStatus('Checking...', 'checking');
+      usernameValid = false;
+      try {
+        const snap = await getDoc(doc(db, 'usernames', value));
+        if (snap.exists()) {
+          setUsernameStatus(`@${value} is already taken.`, 'taken');
+        } else {
+          setUsernameStatus(`@${value} is available.`, 'available');
+          usernameValid = true;
+        }
+      } catch {
+        setUsernameStatus('Could not check availability.', 'invalid');
+      }
+    }
+
+    usernameInput.addEventListener('input', e => {
+      const val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      // Force lowercase + strip invalid chars as user types
+      if (e.target.value !== val) e.target.value = val;
+      clearTimeout(usernameDebounce);
+      usernameDebounce = setTimeout(() => checkUsername(val), 400);
+    });
+
+    // -----------------------------------------------------------------------
+    // Sign In
+    // -----------------------------------------------------------------------
+    signinForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      clearBanner();
+
+      const email    = document.getElementById('siEmail').value.trim();
+      const password = document.getElementById('siPassword').value;
+
+      // Basic client-side validation
+      let ok = true;
+      if (!email) { document.getElementById('siEmailErr').textContent = 'Email is required.'; ok = false; }
+      else         { document.getElementById('siEmailErr').textContent = ''; }
+      if (!password) { document.getElementById('siPasswordErr').textContent = 'Password is required.'; ok = false; }
+      else            { document.getElementById('siPasswordErr').textContent = ''; }
+      if (!ok) return;
+
+      const btn = document.getElementById('signinBtn');
+      btn.textContent = 'Signing in...';
+      btn.disabled = true;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        // onAuthStateChanged will redirect
+      } catch (err) {
+        btn.textContent = 'Sign in';
+        btn.disabled = false;
+        showBanner(friendlyAuthError(err.code));
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Sign Up
+    // -----------------------------------------------------------------------
+    signupForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      clearBanner();
+
+      const username = usernameInput.value.trim().toLowerCase();
+      const email    = document.getElementById('suEmail').value.trim();
+      const password = document.getElementById('suPassword').value;
+
+      // Validate
+      let ok = true;
+      if (!usernameValid) {
+        setUsernameStatus('Please choose a valid, available username.', 'invalid');
+        ok = false;
+      }
+      if (!email) { document.getElementById('suEmailErr').textContent = 'Email is required.'; ok = false; }
+      else         { document.getElementById('suEmailErr').textContent = ''; }
+      if (password.length < 8) { document.getElementById('suPasswordErr').textContent = 'Password must be at least 8 characters.'; ok = false; }
+      else                      { document.getElementById('suPasswordErr').textContent = ''; }
+      if (!ok) return;
+
+      const btn = document.getElementById('signupBtn');
+      btn.textContent = 'Creating account...';
+      btn.disabled = true;
+
+      try {
+        // Create Firebase Auth user
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid  = cred.user.uid;
+
+        // Write username reservation
+        await setDoc(doc(db, 'usernames', username), { uid });
+
+        // Write initial profile document
+        await setDoc(doc(db, 'profiles', username), {
+          uid,
+          username,
+          displayName: username,
+          bio: '',
+          avatar: '',
+          accentColor: '#ffffff',
+          links: [],
+          createdAt: serverTimestamp()
+        });
+
+        // onAuthStateChanged will redirect to dashboard
+      } catch (err) {
+        btn.textContent = 'Create account';
+        btn.disabled = false;
+
+        // If Firestore write failed after user creation, still proceed
+        if (err.code && err.code.startsWith('auth/')) {
+          showBanner(friendlyAuthError(err.code));
+        } else {
+          showBanner('Account created but profile setup failed. Please try again.');
+        }
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Human-readable Firebase Auth error messages
+    // -----------------------------------------------------------------------
+    function friendlyAuthError(code) {
+      const map = {
+        'auth/user-not-found':      'No account found with that email.',
+        'auth/wrong-password':      'Incorrect password.',
+        'auth/invalid-credential':  'Invalid email or password.',
+        'auth/email-already-in-use': 'That email is already registered.',
+        'auth/invalid-email':       'Please enter a valid email address.',
+        'auth/weak-password':       'Password must be at least 6 characters.',
+        'auth/too-many-requests':   'Too many attempts. Please wait a moment.'
+      };
+      return map[code] || 'Something went wrong. Please try again.';
+    }
+  </script>
+</body>
+</html>

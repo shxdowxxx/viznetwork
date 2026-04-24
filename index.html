@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VizNetwork — Own your corner</title>
+  <meta name="description" content="Create your free profile page. Share everything in one link." />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+  <style>
+    /* ================================================================
+       LANDING PAGE STYLES
+       ================================================================ */
+
+    /* ---- Hero ---- */
+    .hero {
+      padding: 7rem 1.5rem 5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1.05;
+      letter-spacing: -0.01em;
+      color: var(--accent);
+      max-width: 700px;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      color: var(--text-muted);
+      font-weight: 300;
+      max-width: 460px;
+      line-height: 1.65;
+    }
+
+    /* Claim form */
+    .claim-form {
+      display: flex;
+      align-items: stretch;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      width: 100%;
+      max-width: 440px;
+      transition: border-color 0.2s ease;
+    }
+
+    .claim-form:focus-within {
+      border-color: var(--border-hover);
+    }
+
+    .claim-prefix {
+      display: flex;
+      align-items: center;
+      padding: 0 0.875rem;
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+
+    .claim-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0.75rem 0.875rem;
+      font-size: 0.9375rem;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .claim-input:focus {
+      border-color: transparent;
+    }
+
+    .claim-btn {
+      border: none;
+      background: var(--accent);
+      color: #080808;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0 1.25rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .claim-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .hero-meta {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
+    }
+
+    /* ---- Features section ---- */
+    .features {
+      padding: 4rem 1.5rem 6rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .feature-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .feature-title {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .feature-body {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 680px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+      }
+
+      .hero {
+        padding: 5rem 1.5rem 4rem;
+      }
+    }
+
+    /* ================================================================
+       PROFILE VIEWER STYLES
+       ================================================================ */
+
+    #profileView {
+      display: none; /* Shown by JS when viewing a username route */
+      flex: 1;
+      padding: 3.5rem 1.5rem 5rem;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    #profileView.visible {
+      display: flex;
+    }
+
+    .profile-card {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    .profile-avatar-wrap {
+      width: 80px;
+      height: 80px;
+      position: relative;
+    }
+
+    .profile-avatar-wrap img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+
+    .profile-avatar-fallback {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+    }
+
+    .profile-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: 0.03em;
+      color: var(--text);
+      margin-top: 0.25rem;
+    }
+
+    .profile-handle {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .profile-bio {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 360px;
+      margin-top: 0.25rem;
+    }
+
+    /* Links list */
+    .profile-links {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    /* Each link button — uses CSS variable --accent-color injected per-profile */
+    .profile-link-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.125rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+    }
+
+    .profile-link-btn .link-icon {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+    }
+
+    .profile-link-btn .link-label {
+      flex: 1;
+    }
+
+    .profile-link-btn .link-arrow {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      transition: var(--transition);
+    }
+
+    /* Accent-tinted hover — color driven by inline CSS var per profile */
+    .profile-link-btn:hover {
+      border-color: var(--profile-accent, rgba(255,255,255,0.14));
+      background: var(--surface-2);
+    }
+
+    .profile-link-btn:hover .link-icon {
+      color: var(--profile-accent, var(--text-muted));
+    }
+
+    .profile-link-btn:hover .link-arrow {
+      color: var(--profile-accent, var(--text-dim));
+    }
+
+    /* Profile loading skeleton */
+    .profile-skeleton {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .skel-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+    }
+
+    .skel-line {
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    /* Profile 404 state */
+    .profile-404 {
+      text-align: center;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .profile-404-code {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+    }
+
+    .profile-404-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .profile-404-body {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ================================================================
+       SHARED LAYOUT
+       ================================================================ */
+
+    /* Keep landing content and profile view separate */
+    #landingContent {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #landingContent.hidden {
+      display: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ----------------------------------------------------------------
+       Navigation
+       ---------------------------------------------------------------- -->
+  <nav class="nav">
+    <a href="/" class="nav-logo">VIZNETWORK</a>
+    <div class="nav-actions" id="navActions">
+      <a href="/auth.html" class="btn btn-ghost btn-sm">Sign in</a>
+      <a href="/auth.html" class="btn btn-primary btn-sm">Get started</a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ----------------------------------------------------------------
+         LANDING CONTENT (hidden when viewing a profile)
+         ---------------------------------------------------------------- -->
+    <div id="landingContent">
+
+      <!-- Hero -->
+      <section class="hero">
+        <span class="hero-eyebrow">Your link. Your identity.</span>
+        <h1 class="hero-h1">Own your corner</h1>
+        <p class="hero-sub">Create your free profile page. Share everything in one link.</p>
+
+        <!-- Username claim form -->
+        <div class="claim-form" id="claimForm">
+          <span class="claim-prefix">viznetwork.org/</span>
+          <input
+            class="claim-input"
+            type="text"
+            id="claimInput"
+            placeholder="yourname"
+            maxlength="20"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Choose your username"
+          />
+          <button class="claim-btn" id="claimBtn">Claim &rarr;</button>
+        </div>
+
+        <p class="hero-meta">Free forever &middot; No credit card &middot; Takes 30 seconds</p>
+      </section>
+
+      <!-- Features -->
+      <section class="features">
+        <div class="features-grid">
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-link"></i>
+            </div>
+            <span class="feature-title">One link</span>
+            <p class="feature-body">Your name, your links, your world. One URL to share everywhere.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-palette"></i>
+            </div>
+            <span class="feature-title">Your style</span>
+            <p class="feature-body">Choose your accent color. Make your page feel like yours.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <span class="feature-title">Always free</span>
+            <p class="feature-body">No paywalls. No ads. Just your page, exactly as you built it.</p>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+    <!-- /landingContent -->
+
+    <!-- ----------------------------------------------------------------
+         PROFILE VIEW (shown when visiting /:username)
+         ---------------------------------------------------------------- -->
+    <div id="profileView">
+
+      <!-- Skeleton (shown while loading) -->
+      <div class="profile-skeleton" id="profileSkeleton">
+        <div class="skeleton skel-avatar"></div>
+        <div class="skeleton skel-line" style="width:140px;"></div>
+        <div class="skeleton skel-line" style="width:90px;height:10px;"></div>
+        <div class="skeleton skel-line" style="width:260px;height:10px;margin-top:0.25rem;"></div>
+        <div class="skeleton skel-line" style="width:100%;height:48px;margin-top:0.5rem;border-radius:8px;"></div>
+        <div class="skeleton skel-line" style="width:100%;height:48px;border-radius:8px;"></div>
+        <div class="skeleton skel-line" style="width:100%;height:48px;border-radius:8px;"></div>
+      </div>
+
+      <!-- Loaded profile card (hidden until data arrives) -->
+      <div class="profile-card" id="profileCard" style="display:none;"></div>
+
+      <!-- 404 / not found state (hidden by default) -->
+      <div class="profile-404" id="profile404" style="display:none;">
+        <span class="profile-404-code">404 NOT FOUND</span>
+        <span class="profile-404-title">This profile doesn't exist yet.</span>
+        <p class="profile-404-body">No one has claimed this username. Be the first.</p>
+        <a href="/auth.html" class="btn btn-primary btn-sm">Claim it &rarr;</a>
+      </div>
+
+    </div>
+    <!-- /profileView -->
+
+  </main>
+
+  <!-- Footer (only shown on landing) -->
+  <footer class="footer" id="siteFooter">
+    <span>&copy; 2026 VizNetwork</span>
+    <span>Built by TheSizCorporation</span>
+  </footer>
+
+  <!-- ----------------------------------------------------------------
+       Firebase + Auth state (check if logged in for nav)
+       ---------------------------------------------------------------- -->
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+    import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+    // -----------------------------------------------------------------------
+    // Route resolution
+    // Route logic:
+    //   1. Check sessionStorage for 'vn_redirect' (set by 404.html)
+    //   2. If present, extract username and show profile view
+    //   3. If not, check window.location.pathname directly
+    //      (works when served with proper rewrite rules)
+    //   4. If path is '/' — show landing
+    // -----------------------------------------------------------------------
+    const redirectPath = sessionStorage.getItem('vn_redirect');
+    if (redirectPath) sessionStorage.removeItem('vn_redirect');
+
+    const rawPath    = redirectPath || window.location.pathname;
+    // Strip leading slash and any trailing slashes, normalize to lowercase
+    const slug       = rawPath.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const isProfile  = slug.length > 0 && slug !== 'index.html';
+
+    // -----------------------------------------------------------------------
+    // Switch layout based on route
+    // -----------------------------------------------------------------------
+    if (isProfile) {
+      document.getElementById('landingContent').classList.add('hidden');
+      document.getElementById('profileView').classList.add('visible');
+      document.getElementById('siteFooter').style.display = 'none';
+      document.title = `${slug} — VizNetwork`;
+
+      // Load profile
+      loadProfile(slug);
+    }
+
+    // -----------------------------------------------------------------------
+    // Auth state — update nav if user is signed in
+    // -----------------------------------------------------------------------
+    onAuthStateChanged(auth, user => {
+      if (user && !isProfile) {
+        // Replace nav actions with dashboard link
+        document.getElementById('navActions').innerHTML = `
+          <a href="/dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+        `;
+      }
+    });
+
+    // -----------------------------------------------------------------------
+    // Profile loader
+    // -----------------------------------------------------------------------
+    async function loadProfile(username) {
+      try {
+        const snap = await getDoc(doc(db, 'profiles', username));
+
+        document.getElementById('profileSkeleton').style.display = 'none';
+
+        if (!snap.exists()) {
+          // Stitch the username into the 404 claim link
+          const claimLink = document.querySelector('#profile404 a');
+          if (claimLink) claimLink.href = `/auth.html?claim=${encodeURIComponent(username)}`;
+          document.getElementById('profile404').style.display = 'flex';
+          document.title = `${username} — VizNetwork`;
+          return;
+        }
+
+        const data = snap.data();
+        renderProfile(username, data);
+
+      } catch (err) {
+        console.error('Profile load error:', err);
+        document.getElementById('profileSkeleton').style.display = 'none';
+        document.getElementById('profile404').style.display = 'flex';
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Profile renderer
+    // -----------------------------------------------------------------------
+    function renderProfile(username, data) {
+      const card        = document.getElementById('profileCard');
+      const accentColor = data.accentColor || '#ffffff';
+      const displayName = data.displayName || username;
+      const bio         = data.bio || '';
+      const avatar      = data.avatar || '';
+      const links       = Array.isArray(data.links) ? data.links : [];
+
+      // Set CSS variable for accent tinting on this profile
+      document.documentElement.style.setProperty('--profile-accent', accentColor);
+
+      // Update page title
+      document.title = `${displayName} (@${username}) — VizNetwork`;
+
+      // Build avatar — image with fallback to initials
+      let avatarHTML;
+      if (avatar) {
+        avatarHTML = `
+          <div class="profile-avatar-wrap">
+            <img
+              src="${escHTML(avatar)}"
+              alt="${escHTML(displayName)}"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <div class="profile-avatar-fallback" style="display:none;">
+              ${initials(displayName)}
+            </div>
+          </div>
+        `;
+      } else {
+        avatarHTML = `
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar-fallback">${initials(displayName)}</div>
+          </div>
+        `;
+      }
+
+      // Build links HTML
+      let linksHTML = '';
+      if (links.length > 0) {
+        const items = links.map(link => {
+          const icon  = escHTML(link.icon  || 'fa-solid fa-link');
+          const label = escHTML(link.label || link.url || 'Link');
+          const url   = escHTML(link.url   || '#');
+          return `
+            <a
+              href="${url}"
+              class="profile-link-btn"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="link-icon"><i class="${icon}"></i></span>
+              <span class="link-label">${label}</span>
+              <span class="link-arrow"><i class="fa-solid fa-arrow-up-right"></i></span>
+            </a>
+          `;
+        }).join('');
+
+        linksHTML = `<div class="profile-links">${items}</div>`;
+      }
+
+      // Bio
+      const bioHTML = bio
+        ? `<p class="profile-bio">${escHTML(bio)}</p>`
+        : '';
+
+      card.innerHTML = `
+        ${avatarHTML}
+        <span class="profile-name">${escHTML(displayName)}</span>
+        <span class="profile-handle">@${escHTML(username)}</span>
+        ${bioHTML}
+        ${linksHTML}
+      `;
+
+      card.style.display = 'flex';
+    }
+
+    // -----------------------------------------------------------------------
+    // Claim form — navigate to /auth.html?claim=username
+    // -----------------------------------------------------------------------
+    document.getElementById('claimBtn')?.addEventListener('click', handleClaim);
+    document.getElementById('claimInput')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleClaim();
+    });
+
+    function handleClaim() {
+      const input = document.getElementById('claimInput');
+      const raw   = (input?.value || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!raw) {
+        input?.focus();
+        return;
+      }
+      window.location.href = `/auth.html?claim=${encodeURIComponent(raw)}`;
+    }
+
+    // Force lowercase + strip invalid chars as user types in claim input
+    document.getElementById('claimInput')?.addEventListener('input', e => {
+      const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (e.target.value !== clean) e.target.value = clean;
+    });
+
+    // -----------------------------------------------------------------------
+    // Utility: get initials from a display name (up to 2 chars)
+    // -----------------------------------------------------------------------
+    function initials(name) {
+      const parts = (name || '?').trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    // -----------------------------------------------------------------------
+    // Utility: escape HTML for safe insertion
+    // -----------------------------------------------------------------------
+    function escHTML(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
