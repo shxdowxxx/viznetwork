@@ -224,9 +224,21 @@
 
     // -----------------------------------------------------------------------
     // Redirect if already authenticated
+    // Flag is set to true after signup profile writes finish so the
+    // onAuthStateChanged callback doesn't redirect before Firestore is written.
     // -----------------------------------------------------------------------
+    let profileReady = false;
+
     onAuthStateChanged(auth, user => {
-      if (user) window.location.replace('/dashboard.html');
+      if (user && profileReady) window.location.replace('/dashboard.html');
+      // Already-logged-in users (page refresh / return visit) redirect immediately
+      if (user && !profileReady) {
+        // Give signup flow 500ms to set the flag; if it doesn't, user was
+        // already authenticated before this page load so redirect right away.
+        setTimeout(() => {
+          if (!profileReady) window.location.replace('/dashboard.html');
+        }, 500);
+      }
     });
 
     // -----------------------------------------------------------------------
@@ -409,7 +421,9 @@
           createdAt: serverTimestamp()
         });
 
-        // onAuthStateChanged will redirect to dashboard
+        // Both Firestore writes done — safe to redirect now
+        profileReady = true;
+        window.location.replace('/dashboard.html');
       } catch (err) {
         btn.textContent = 'Create account';
         btn.disabled = false;
